@@ -1,0 +1,84 @@
+services:
+
+  auth-service:
+    build:
+      context: ./auth-service
+      target: dev
+    volumes:
+      - ./auth-service/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  product-service:
+    build:
+      context: ./product-service
+      target: dev
+    volumes:
+      - ./product-service/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  order-service:
+    build:
+      context: ./order-service
+      target: dev
+    volumes:
+      - ./order-service/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  payment-service:
+    build:
+      context: ./payment-service
+      target: dev
+    volumes:
+      - ./payment-service/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  delivery-service:
+    build:
+      context: ./delivery-service
+      target: dev
+    volumes:
+      - ./delivery-service/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  analytics-service:
+    build:
+      context: ./analytics-service
+      target: dev
+    volumes:
+      - ./analytics-service/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  search-service:
+    build:
+      context: ./search-service
+      target: dev
+    volumes:
+      - ./search-service/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      target: dev
+    volumes:
+      - ./api-gateway/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    volumes:
+      - ./frontend/src:/app/src
+    ports:
+      - "5173:5173"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
