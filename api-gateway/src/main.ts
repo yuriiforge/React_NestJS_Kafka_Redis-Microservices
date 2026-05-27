@@ -5,6 +5,12 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  });
+
   // protected routes — JWT check first
   app.use('/api/orders', jwtMiddleware);
   app.use('/api/products', jwtMiddleware);

@@ -44,9 +44,7 @@ export class TokenService {
 
   verifyToken(token: string): CustomJwtPayload {
     try {
-      return this.jwtService.verify<CustomJwtPayload>(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      return this.jwtService.verify<CustomJwtPayload>(token);
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
