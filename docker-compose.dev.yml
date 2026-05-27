@@ -2,73 +2,81 @@ services:
 
   auth-service:
     build:
-      context: ./auth-service
+      context: .
+      dockerfile: ./auth-service/Dockerfile
       target: dev
     volumes:
-      - ./auth-service/src:/app/src
+      - ./auth-service/src:/app/auth-service/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
   product-service:
     build:
-      context: ./product-service
+      context: .
+      dockerfile: ./product-service/Dockerfile
       target: dev
     volumes:
-      - ./product-service/src:/app/src
+      - ./product-service/src:/app/product-service/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
   order-service:
     build:
-      context: ./order-service
+      context: .
+      dockerfile: ./order-service/Dockerfile
       target: dev
     volumes:
-      - ./order-service/src:/app/src
+      - ./order-service/src:/app/order-service/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
   payment-service:
     build:
-      context: ./payment-service
+      context: .
+      dockerfile: ./payment-service/Dockerfile
       target: dev
     volumes:
-      - ./payment-service/src:/app/src
+      - ./payment-service/src:/app/payment-service/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
   delivery-service:
     build:
-      context: ./delivery-service
+      context: .
+      dockerfile: ./delivery-service/Dockerfile
       target: dev
     volumes:
-      - ./delivery-service/src:/app/src
+      - ./delivery-service/src:/app/delivery-service/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
   analytics-service:
     build:
-      context: ./analytics-service
+      context: .
+      dockerfile: ./analytics-service/Dockerfile
       target: dev
     volumes:
-      - ./analytics-service/src:/app/src
+      - ./analytics-service/src:/app/analytics-service/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
   search-service:
     build:
-      context: ./search-service
+      context: .
+      dockerfile: ./search-service/Dockerfile
       target: dev
     volumes:
-      - ./search-service/src:/app/src
+      - ./search-service/src:/app/search-service/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
   api-gateway:
     build:
-      context: ./api-gateway
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
       target: dev
     volumes:
-      - ./api-gateway/src:/app/src
+      - ./api-gateway/src:/app/api-gateway/src
     environment:
       CHOKIDAR_USEPOLLING: "true"
 

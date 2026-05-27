@@ -3,19 +3,25 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 
 COPY package*.json ./
+COPY shared/package*.json ./shared/
+COPY analytics-service/package*.json ./analytics-service/
+
 RUN npm ci
+
+COPY shared/ ./shared/
+COPY analytics-service/ ./analytics-service/
+
+WORKDIR /app/analytics-service
 
 
 FROM deps AS dev
 
-COPY . .
 EXPOSE 3004
 CMD ["npm", "run", "start:dev"]
 
 
 FROM deps AS builder
 
-COPY . .
 RUN npm run build
 
 
@@ -24,9 +30,14 @@ FROM node:22-alpine AS prod
 WORKDIR /app
 
 COPY package*.json ./
+COPY shared/package*.json ./shared/
+COPY analytics-service/package*.json ./analytics-service/
+
 RUN npm ci --omit=dev
 
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/analytics-service/dist ./analytics-service/dist
+
+WORKDIR /app/analytics-service
 
 EXPOSE 3004
 CMD ["node", "dist/main"]

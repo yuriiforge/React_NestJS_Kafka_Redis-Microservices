@@ -143,7 +143,9 @@ services:
   # ── Microservices ─────────────────────────────────────────────
 
   auth-service:
-    build: ./auth-service
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
     restart: unless-stopped
     ports:
       - "3006:3006"
@@ -156,7 +158,9 @@ services:
         condition: service_healthy
 
   product-service:
-    build: ./product-service
+    build:
+      context: .
+      dockerfile: ./product-service/Dockerfile
     restart: unless-stopped
     ports:
       - "3007:3007"
@@ -167,7 +171,9 @@ services:
         condition: service_healthy
 
   order-service:
-    build: ./order-service
+    build:
+      context: .
+      dockerfile: ./order-service/Dockerfile
     restart: unless-stopped
     ports:
       - "3001:3001"
@@ -180,7 +186,9 @@ services:
         condition: service_healthy
 
   payment-service:
-    build: ./payment-service
+    build:
+      context: .
+      dockerfile: ./payment-service/Dockerfile
     restart: unless-stopped
     ports:
       - "3002:3002"
@@ -193,7 +201,9 @@ services:
         condition: service_healthy
 
   delivery-service:
-    build: ./delivery-service
+    build:
+      context: .
+      dockerfile: ./delivery-service/Dockerfile
     restart: unless-stopped
     ports:
       - "3003:3003"
@@ -206,7 +216,9 @@ services:
         condition: service_healthy
 
   analytics-service:
-    build: ./analytics-service
+    build:
+      context: .
+      dockerfile: ./analytics-service/Dockerfile
     restart: unless-stopped
     ports:
       - "3004:3004"
@@ -219,7 +231,9 @@ services:
         condition: service_healthy
 
   search-service:
-    build: ./search-service
+    build:
+      context: .
+      dockerfile: ./search-service/Dockerfile
     restart: unless-stopped
     ports:
       - "3005:3005"
@@ -230,7 +244,9 @@ services:
         condition: service_healthy
 
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
     restart: unless-stopped
     ports:
       - "8000:8000"
