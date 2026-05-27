@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@ecommerce/shared/src/enums/role.enum';
 import { CustomJwtPayload } from '@ecommerce/shared/src/types/jwt-payload.type';
@@ -12,7 +12,7 @@ export class TokenService {
     @Inject(REDIS_CLIENT) private redis: Redis,
   ) {}
 
-  async generateToken(user: {
+  async generateTokens(user: {
     userId: string;
     email: string;
     username: string;
@@ -42,9 +42,37 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
-  async verifyToken() {}
+  verifyToken(token: string): CustomJwtPayload {
+    try {
+      return this.jwtService.verify<CustomJwtPayload>(token, {
+        secret: process.env.JWT_SECRET,
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
 
-  async refreshToken() {}
+  async refreshToken(userId: string, refreshToken: string) {
+    // check if refresh token exists in Redis
+    const stored = await this.redis.get(`refresh:${userId}`);
 
-  async revokeToken() {}
+    if (!stored || stored !== refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // get user data from the token payload
+    const payload = this.jwtService.decode<CustomJwtPayload>(refreshToken);
+
+    // issue new token pair
+    return this.generateTokens({
+      userId: payload.userId,
+      email: payload.email,
+      username: payload.username,
+      role: payload.role,
+    });
+  }
+
+  async revokeToken(userId: string): Promise<void> {
+    await this.redis.del(`refresh:${userId}`);
+  }
 }
