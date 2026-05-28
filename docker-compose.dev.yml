@@ -29,6 +29,7 @@ services:
       target: dev
     volumes:
       - ./order-service/src:/app/order-service/src
+    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
     environment:
       CHOKIDAR_USEPOLLING: "true"
 

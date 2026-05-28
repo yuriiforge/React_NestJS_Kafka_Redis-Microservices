@@ -177,8 +177,8 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3001"
-    environment:
-      PORT: 3001
+    env_file: ./order-service/.env
+    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
