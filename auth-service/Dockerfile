@@ -36,6 +36,7 @@ COPY auth-service/package*.json ./auth-service/
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/auth-service/dist ./auth-service/dist
+COPY shared/prisma ./shared/prisma
 
 WORKDIR /app/auth-service
 

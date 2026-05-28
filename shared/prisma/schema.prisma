@@ -19,14 +19,27 @@ enum Role {
 }
 
 model User {
-  id String @id @default(uuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
-  email String @unique
-  username String @unique
-  password String
+  email     String @unique
+  username  String @unique
+  password  String
   firstName String
-  lastName String
-  role Role @default(USER)
+  lastName  String
+  role      Role   @default(USER)
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  name        String
+  description String
+  price       Float
+  stock       Int     @default(0)
+  category    String
+  isActive    Boolean @default(true)
 }

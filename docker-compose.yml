@@ -67,7 +67,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: app
+      POSTGRES_DB: ecommerce
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -149,8 +149,8 @@ services:
     restart: unless-stopped
     ports:
       - "3006:3006"
-    environment:
-      PORT: 3006
+    env_file: ./auth-service/.env
+    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
@@ -164,8 +164,8 @@ services:
     restart: unless-stopped
     ports:
       - "3007:3007"
-    environment:
-      PORT: 3007
+    env_file: ./product-service/.env
+    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
@@ -250,8 +250,7 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    environment:
-      PORT: 8000
+    env_file: ./api-gateway/.env
     depends_on:
       - auth-service
       - product-service
