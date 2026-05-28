@@ -40,6 +40,7 @@ services:
       target: dev
     volumes:
       - ./payment-service/src:/app/payment-service/src
+    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
@@ -50,6 +51,7 @@ services:
       target: dev
     volumes:
       - ./delivery-service/src:/app/delivery-service/src
+    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
     environment:
       CHOKIDAR_USEPOLLING: "true"
 

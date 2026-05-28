@@ -64,6 +64,41 @@ model OrderItem {
   quantity  Int
 }
 
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  orderId   String        @unique
+  userId    String
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+}
+
+enum DeliveryStatus {
+  ASSIGNED
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+model Delivery {
+  id                  String         @id @default(uuid())
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  orderId             String         @unique
+  userId              String
+  status              DeliveryStatus @default(ASSIGNED)
+  estimatedDeliveryAt DateTime
+}
+
 model Product {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())

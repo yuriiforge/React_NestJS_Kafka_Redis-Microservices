@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { type CustomJwtPayload } from '@ecommerce/shared/src/types/jwt-payload.type';
+import {
+  CurrentUser,
+  type RequestUser,
+} from '@ecommerce/shared/src/decorators/current-user.decorator';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -30,12 +32,12 @@ export class AuthController {
   }
 
   @Get('me')
-  me(@CurrentUser() user: CustomJwtPayload) {
+  me(@CurrentUser() user: RequestUser) {
     return this.authService.getMe(user.userId);
   }
 
   @Post('logout')
-  async logout(@CurrentUser() user: CustomJwtPayload) {
+  async logout(@CurrentUser() user: RequestUser) {
     return this.authService.logout(user.userId);
   }
 }

@@ -1,6 +1,12 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { OrderStatus } from '@ecommerce/shared/src/generated/prisma';
+import { OrderStatus, Role } from '@ecommerce/shared/src/generated/prisma';
 import prisma from '@ecommerce/shared/src/prisma';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
@@ -9,9 +15,7 @@ import { KafkaTopic } from '@ecommerce/shared/src/events/kafka-topics.enum';
 
 @Injectable()
 export class OrderService {
-  constructor(
-    @Inject('KAFKA_CLIENT') private readonly kafka: ClientKafka,
-  ) {}
+  constructor(@Inject('KAFKA_CLIENT') private readonly kafka: ClientKafka) {}
 
   async findAll(userId: string, role: string, query: QueryOrderDto) {
     const { status, page = 1, limit = 20 } = query;
@@ -47,7 +51,7 @@ export class OrderService {
     });
 
     if (!order) throw new NotFoundException('Order not found');
-    if (role !== 'ADMIN' && order.userId !== userId) {
+    if (role !== Role.ADMIN && order.userId !== userId) {
       throw new ForbiddenException('Access denied');
     }
 
