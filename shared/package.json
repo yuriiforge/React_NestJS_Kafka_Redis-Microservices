@@ -3,12 +3,25 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "migrate": "prisma migrate deploy --config prisma.config.ts",
+    "migrate:test": "prisma migrate deploy --config prisma.test.config.ts",
+    "seed": "ts-node -r dotenv/config --transpile-only prisma/seed.ts",
+    "seed:test": "cross-env DOTENV_CONFIG_PATH=.env.test ts-node -r dotenv/config --transpile-only prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "ts-node -r dotenv/config --transpile-only prisma/seed.ts"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.0.0",
+    "bcryptjs": "^3.0.3",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.0.0",
+    "ts-node": "^10.9.2"
   }
 }

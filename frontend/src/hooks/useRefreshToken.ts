@@ -17,7 +17,14 @@ export const useRefreshToken = () => {
   useEffect(() => {
     if (!accessToken || !refreshToken) return;
 
-    const { sub: userId, exp } = jwtDecode<JwtPayload>(accessToken);
+    let userId: string;
+    let exp: number;
+    try {
+      ({ sub: userId, exp } = jwtDecode<JwtPayload>(accessToken));
+    } catch {
+      clearTokens();
+      return;
+    }
     const delay = exp * 1000 - Date.now() - 60_000;
 
     const refresh = async () => {
