@@ -1,42 +1,135 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
-import { PaymentStatus, prisma, OrderCreatedEvent, PaymentCompletedEvent, KafkaTopic } from '@ecommerce/shared';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
+import { Consumer, Producer } from 'kafkajs';
+import {
+  OrderStatus,
+  PaymentStatus,
+  prisma,
+  KafkaTopic,
+  KafkaGroup,
+  PaymentResult,
+  OrderCreatedEvent,
+  PaymentProcessedEvent,
+  createProducer,
+  createConsumer,
+  withRetry,
+  publishToDLQ,
+} from '@ecommerce/shared';
+
+const SUCCESS_RATE = 0.8;
 
 @Injectable()
-export class PaymentService {
+export class PaymentService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PaymentService.name);
+  private producer!: Producer;
+  private consumer!: Consumer;
 
-  constructor(
-    @Inject('KAFKA_CLIENT') private readonly kafka: ClientKafka,
-  ) {}
+  async onModuleInit() {
+    this.producer = await createProducer();
+    this.consumer = await createConsumer(
+      KafkaGroup.PAYMENT_SERVICE,
+      [KafkaTopic.ORDERS],
+      async ({ message }) => {
+        const event: OrderCreatedEvent = JSON.parse(message.value!.toString());
+        await this.processPayment(event);
+      },
+    );
+    this.logger.log('Kafka ready');
+  }
 
-  async processPayment(event: OrderCreatedEvent) {
+  async onModuleDestroy() {
+    await this.producer?.disconnect();
+    await this.consumer?.disconnect();
+  }
+
+  private async processPayment(event: OrderCreatedEvent) {
     this.logger.log(`Processing payment for order ${event.orderId}`);
 
     const payment = await prisma.payment.create({
       data: {
         orderId: event.orderId,
         userId: event.userId,
-        amount: event.totalPrice,
+        amount: event.totalAmount,
         status: PaymentStatus.PENDING,
       },
     });
 
-    // Simulate payment processing
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: { status: PaymentStatus.COMPLETED },
-    });
+    let attempts = 0;
 
-    const completedEvent: PaymentCompletedEvent = {
-      orderId: event.orderId,
-      userId: event.userId,
-      totalPrice: event.totalPrice,
-      paidAt: new Date(),
-    };
+    try {
+      await withRetry(
+        () => {
+          attempts++;
+          if (Math.random() >= SUCCESS_RATE) {
+            return Promise.reject(new Error('Payment declined by provider'));
+          }
+          return Promise.resolve();
+        },
+        3,
+        1000,
+      );
 
-    this.kafka.emit(KafkaTopic.PAYMENT_COMPLETED, completedEvent);
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.COMPLETED },
+      });
 
-    this.logger.log(`Payment completed for order ${event.orderId}`);
+      await prisma.order.update({
+        where: { id: event.orderId },
+        data: { status: OrderStatus.PAID },
+      });
+
+      const successEvent: PaymentProcessedEvent = {
+        paymentId: payment.id,
+        orderId: event.orderId,
+        status: PaymentResult.SUCCESS,
+        processedAt: new Date().toISOString(),
+        failureReason: null,
+      };
+
+      await this.producer.send({
+        topic: KafkaTopic.PAYMENTS,
+        messages: [{ key: event.orderId, value: JSON.stringify(successEvent) }],
+      });
+
+      this.logger.log(`Payment succeeded for order ${event.orderId}`);
+    } catch (err) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.FAILED },
+      });
+
+      await prisma.order.update({
+        where: { id: event.orderId },
+        data: { status: OrderStatus.CANCELLED },
+      });
+
+      const failedEvent: PaymentProcessedEvent = {
+        paymentId: payment.id,
+        orderId: event.orderId,
+        status: PaymentResult.FAILED,
+        processedAt: new Date().toISOString(),
+        failureReason: err instanceof Error ? err.message : 'Unknown error',
+      };
+
+      await this.producer.send({
+        topic: KafkaTopic.PAYMENTS,
+        messages: [{ key: event.orderId, value: JSON.stringify(failedEvent) }],
+      });
+
+      await publishToDLQ(this.producer, event, err, attempts);
+
+      this.logger.warn(
+        `Payment failed for order ${event.orderId} after ${attempts} attempt(s)`,
+      );
+    }
+  }
+
+  async findByOrderId(orderId: string) {
+    return prisma.payment.findUnique({ where: { orderId } });
   }
 }

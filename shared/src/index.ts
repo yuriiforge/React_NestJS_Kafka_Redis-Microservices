@@ -21,6 +21,7 @@ export { KafkaGroup } from './events/kafka-groups.enum';
 
 // Kafka events
 export type { OrderCreatedEvent } from './events/order-created.event';
+export { PaymentResult } from './events/payment-processed.event';
 export type { PaymentProcessedEvent } from './events/payment-processed.event';
 export { OrderDeliveryStatus } from './events/order-status-updated.event';
 export type { OrderStatusUpdatedEvent } from './events/order-status-updated.event';

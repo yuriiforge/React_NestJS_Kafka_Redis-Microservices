@@ -1,7 +1,12 @@
+export enum PaymentResult {
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+}
+
 export interface PaymentProcessedEvent {
   paymentId: string;
   orderId: string;
-  status: 'SUCCESS' | 'FAILED';
+  status: PaymentResult;
   processedAt: string;
   failureReason: string | null;
 }

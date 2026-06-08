@@ -1,14 +1,26 @@
-import { Controller } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AuthGuard } from '@ecommerce/shared';
 import { PaymentService } from './payment.service';
-import { OrderCreatedEvent, KafkaTopic } from '@ecommerce/shared';
 
-@Controller()
+@ApiTags('payments')
+@ApiBearerAuth()
+@Controller('payments')
+@UseGuards(AuthGuard)
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @EventPattern(KafkaTopic.ORDER_CREATED)
-  async handleOrderCreated(@Payload() event: OrderCreatedEvent) {
-    await this.paymentService.processPayment(event);
+  @Get(':orderId')
+  @ApiOperation({ summary: 'Get payment status for an order' })
+  @ApiParam({ name: 'orderId', description: 'Order UUID' })
+  @ApiResponse({ status: 200, description: 'Payment details' })
+  findByOrderId(@Param('orderId') orderId: string) {
+    return this.paymentService.findByOrderId(orderId);
   }
 }
