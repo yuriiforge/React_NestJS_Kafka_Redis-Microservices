@@ -50,7 +50,9 @@ services:
     command: >
       "kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic orders --partitions 3 --replication-factor 1 &&
        kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic payments --partitions 3 --replication-factor 1 &&
-       kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic deliveries --partitions 3 --replication-factor 1"
+       kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic order.status.updated --partitions 3 --replication-factor 1 &&
+       kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic orders.DLQ --partitions 1 --replication-factor 1 &&
+       kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic order-stats --partitions 1 --replication-factor 1"
 
   kafka-ui:
     image: provectuslabs/kafka-ui

@@ -1,27 +1,31 @@
-import { Controller } from '@nestjs/common';
-import { AnalyticsService } from './analytics.service';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
-  KafkaTopic,
-  OrderCreatedEvent,
-  PaymentProcessedEvent,
-  OrderStatusUpdatedEvent,
-} from '@ecommerce/shared';
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AuthGuard } from '@ecommerce/shared';
+import { AnalyticsService } from './analytics.service';
 
-@Controller()
+@ApiTags('analytics')
+@ApiBearerAuth()
+@Controller('analytics')
+@UseGuards(AuthGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  handleOrderCreated(event: OrderCreatedEvent) {
-    return this.analyticsService.trackOrderCreated(event);
-  }
-
-  handlePaymentProcessed(event: PaymentProcessedEvent) {
-    return this.analyticsService.trackPaymentProcessed(event);
-  }
-
-  handleOrderStatusUpdated(event: OrderStatusUpdatedEvent) {
-    return this.analyticsService.trackOrderStatusUpdated(event);
+  @Get('stats')
+  @ApiOperation({ summary: 'Sliding window stats for the dashboard' })
+  @ApiQuery({
+    name: 'window',
+    required: false,
+    description: 'Window size in seconds (default 60)',
+  })
+  @ApiResponse({ status: 200, description: 'Aggregated stats' })
+  getStats(@Query('window') window?: string) {
+    const windowSeconds = window ? parseInt(window, 10) : 60;
+    return this.analyticsService.getStats(windowSeconds);
   }
 }
-
-export { KafkaTopic };
