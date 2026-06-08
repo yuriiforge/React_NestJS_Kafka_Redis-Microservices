@@ -6,7 +6,7 @@ services:
       target: dev
     volumes:
       - ./auth-service/src:/app/auth-service/src
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
+    command: npm run start:dev
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
@@ -17,7 +17,7 @@ services:
       target: dev
     volumes:
       - ./product-service/src:/app/product-service/src
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
+    command: npm run start:dev
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
@@ -28,7 +28,7 @@ services:
       target: dev
     volumes:
       - ./order-service/src:/app/order-service/src
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
+    command: npm run start:dev
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
@@ -39,7 +39,7 @@ services:
       target: dev
     volumes:
       - ./payment-service/src:/app/payment-service/src
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
+    command: npm run start:dev
     environment:
       CHOKIDAR_USEPOLLING: "true"
 
@@ -50,7 +50,7 @@ services:
       target: dev
     volumes:
       - ./delivery-service/src:/app/delivery-service/src
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
+    command: npm run start:dev
     environment:
       CHOKIDAR_USEPOLLING: "true"
 

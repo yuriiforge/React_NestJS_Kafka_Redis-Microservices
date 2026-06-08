@@ -1,5 +1,7 @@
 export enum KafkaTopic {
-  ORDER_CREATED       = 'order.created',
-  PAYMENT_COMPLETED   = 'payment.completed',
-  DELIVERY_STARTED    = 'delivery.started',
+  ORDERS             = 'orders',
+  PAYMENTS           = 'payments',
+  ORDER_STATUS_UPDATED = 'order.status.updated',
+  ORDERS_DLQ         = 'orders.DLQ',
+  ORDER_STATS        = 'order-stats',
 }

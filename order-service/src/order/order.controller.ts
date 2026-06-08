@@ -1,5 +1,25 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards, Headers } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiHeader } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  MessageEvent,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Sse,
+  UseGuards,
+  Headers,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiHeader,
+} from '@nestjs/swagger';
+import { map, Observable } from 'rxjs';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
@@ -13,9 +33,19 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List orders (own orders for users, all for admins)' })
-  @ApiHeader({ name: 'x-user-id', required: false, description: 'Injected by gateway' })
-  @ApiHeader({ name: 'x-user-role', required: false, description: 'Injected by gateway' })
+  @ApiOperation({
+    summary: 'List orders (own orders for users, all for admins)',
+  })
+  @ApiHeader({
+    name: 'x-user-id',
+    required: false,
+    description: 'Injected by gateway',
+  })
+  @ApiHeader({
+    name: 'x-user-role',
+    required: false,
+    description: 'Injected by gateway',
+  })
   @ApiResponse({ status: 200, description: 'Paginated order list' })
   findAll(
     @Headers('x-user-id') userId: string,
@@ -41,10 +71,7 @@ export class OrderController {
   @Post()
   @ApiOperation({ summary: 'Create a new order' })
   @ApiResponse({ status: 201, description: 'Created order' })
-  create(
-    @Body() dto: CreateOrderDto,
-    @Headers('x-user-id') userId: string,
-  ) {
+  create(@Body() dto: CreateOrderDto, @Headers('x-user-id') userId: string) {
     return this.orderService.create(dto, userId);
   }
 
@@ -58,5 +85,14 @@ export class OrderController {
     @Headers('x-user-role') role: string,
   ) {
     return this.orderService.cancel(id, userId, role);
+  }
+
+  @Sse(':id/events')
+  @ApiOperation({ summary: 'SSE stream of status updates for an order' })
+  @ApiParam({ name: 'id', description: 'Order UUID' })
+  orderEvents(@Param('id') id: string): Observable<MessageEvent> {
+    return this.orderService
+      .getOrderSubject(id)
+      .pipe(map((data) => ({ data })));
   }
 }

@@ -1,3 +1,1 @@
-export const throttlerConfig: { ttl: number; limit: number }[] = [
-  { ttl: 60_000, limit: 100 },
-];
+export const throttlerConfig = [{ ttl: 60_000, limit: 100 }] as const;

@@ -148,6 +148,24 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
 
+  # ── Migration runner ──────────────────────────────────────────
+
+  migration-runner:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+      target: deps
+    command: >
+      sh -c "
+      /app/node_modules/.bin/prisma migrate deploy
+      --schema=/app/shared/prisma/schema.prisma
+      "
+    env_file: ./auth-service/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
   # ── Microservices ─────────────────────────────────────────────
 
   auth-service:
@@ -158,10 +176,10 @@ services:
     ports:
       - "3006:3006"
     env_file: ./auth-service/.env
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: node dist/main.js
     depends_on:
-      postgres:
-        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -173,10 +191,10 @@ services:
     ports:
       - "3007:3007"
     env_file: ./product-service/.env
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: node dist/main.js
     depends_on:
-      postgres:
-        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
 
   order-service:
     build:
@@ -186,10 +204,10 @@ services:
     ports:
       - "3001:3001"
     env_file: ./order-service/.env
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: node dist/main.js
     depends_on:
-      postgres:
-        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
 
@@ -201,10 +219,10 @@ services:
     ports:
       - "3002:3002"
     env_file: ./payment-service/.env
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: node dist/main.js
     depends_on:
-      postgres:
-        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
 
@@ -216,10 +234,10 @@ services:
     ports:
       - "3003:3003"
     env_file: ./delivery-service/.env
-    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: node dist/main.js
     depends_on:
-      postgres:
-        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
 
