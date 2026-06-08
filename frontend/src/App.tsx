@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
+import { useRefreshToken } from '@/hooks/useRefreshToken';
 import AuthPage from '@/pages/Auth';
 import ShopPage from '@/pages/Shop';
 import OrdersPage from '@/pages/Orders';
@@ -40,6 +41,8 @@ function RootRoute() {
 }
 
 export default function App() {
+  useRefreshToken();
+
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
