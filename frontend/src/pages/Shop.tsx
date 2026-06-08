@@ -28,7 +28,7 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="px-6 py-8">
         {/* Filters */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {['All', 'Electronics', 'Sports', 'Home', 'Accessories'].map((cat) => (

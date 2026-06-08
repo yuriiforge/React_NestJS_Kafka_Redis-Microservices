@@ -23,7 +23,7 @@ export default function OrdersPage() {
         <span className="text-sm text-gray-500">{orders.length} orders</span>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="px-6 py-8">
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[

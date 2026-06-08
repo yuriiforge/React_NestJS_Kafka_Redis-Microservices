@@ -23,9 +23,9 @@ export default function ProductSearchPage() {
         <p className="text-sm text-gray-400 mt-0.5">Search and filter our catalogue</p>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 flex gap-6">
+      <div className="px-6 py-8 flex gap-6">
         {/* Sidebar filters */}
-        <aside className="w-52 flex-shrink-0 flex flex-col gap-4">
+        <aside className="w-52 shrink-0 flex flex-col gap-4">
           <div className="bg-white rounded-xl border p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Category</p>
             <div className="flex flex-col gap-2">

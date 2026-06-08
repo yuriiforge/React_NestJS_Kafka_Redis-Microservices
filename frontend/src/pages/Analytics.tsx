@@ -27,7 +27,7 @@ export default function AnalyticsPage() {
         <p className="text-sm text-gray-400 mt-0.5">Platform overview · last 30 days</p>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-8">
+      <div className="px-6 py-8 flex flex-col gap-8">
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((s) => (
