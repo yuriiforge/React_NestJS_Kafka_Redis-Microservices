@@ -1,5 +1,4 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
 
 export interface RequestUser {
   userId: string;
@@ -9,12 +8,12 @@ export interface RequestUser {
 
 export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): RequestUser => {
-    const request = ctx.switchToHttp().getRequest<Request>();
+    const request = ctx.switchToHttp().getRequest<{ headers: Record<string, string> }>();
 
     return {
-      userId: request.headers['x-user-id'] as string,
-      email:  request.headers['x-user-email'] as string,
-      role:   request.headers['x-user-role'] as string,
+      userId: request.headers['x-user-id'],
+      email:  request.headers['x-user-email'],
+      role:   request.headers['x-user-role'],
     };
   },
 );

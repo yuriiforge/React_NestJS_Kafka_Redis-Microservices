@@ -1,10 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { PaymentStatus } from '@ecommerce/shared/src/generated/prisma';
-import prisma from '@ecommerce/shared/src/prisma';
-import { OrderCreatedEvent } from '@ecommerce/shared/src/events/order-created.event';
-import { PaymentCompletedEvent } from '@ecommerce/shared/src/events/payment-completed.event';
-import { KafkaTopic } from '@ecommerce/shared/src/events/kafka-topics.enum';
+import { PaymentStatus, prisma, OrderCreatedEvent, PaymentCompletedEvent, KafkaTopic } from '@ecommerce/shared';
 
 @Injectable()
 export class PaymentService {

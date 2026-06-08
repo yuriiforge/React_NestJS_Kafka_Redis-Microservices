@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
-import { KafkaTopic } from '@ecommerce/shared/src/events/kafka-topics.enum';
-import { OrderCreatedEvent } from '@ecommerce/shared/src/events/order-created.event';
-import { PaymentCompletedEvent } from '@ecommerce/shared/src/events/payment-completed.event';
-import { DeliveryStartedEvent } from '@ecommerce/shared/src/events/delivery-started.event';
+import { KafkaTopic, OrderCreatedEvent, PaymentCompletedEvent, DeliveryStartedEvent } from '@ecommerce/shared';
 
 @Injectable()
 export class AnalyticsService {

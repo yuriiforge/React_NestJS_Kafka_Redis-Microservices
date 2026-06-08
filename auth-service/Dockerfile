@@ -11,6 +11,10 @@ RUN npm ci
 COPY shared/ ./shared/
 COPY auth-service/ ./auth-service/
 
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
+    /app/node_modules/.bin/tsc --project /app/shared/tsconfig.json && \
+    cp -r ./shared/src/generated ./shared/dist/generated
+
 WORKDIR /app/auth-service
 
 
@@ -36,6 +40,7 @@ COPY auth-service/package*.json ./auth-service/
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/auth-service/dist ./auth-service/dist
+COPY --from=builder /app/shared/dist ./shared/dist
 COPY shared/prisma ./shared/prisma
 
 WORKDIR /app/auth-service

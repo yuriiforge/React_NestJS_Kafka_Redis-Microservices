@@ -6,12 +6,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { OrderStatus, Role } from '@ecommerce/shared/src/generated/prisma';
-import prisma from '@ecommerce/shared/src/prisma';
+import { OrderStatus, Role, prisma, OrderCreatedEvent, KafkaTopic } from '@ecommerce/shared';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
-import { OrderCreatedEvent } from '@ecommerce/shared/src/events/order-created.event';
-import { KafkaTopic } from '@ecommerce/shared/src/events/kafka-topics.enum';
 
 @Injectable()
 export class OrderService {

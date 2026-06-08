@@ -11,6 +11,10 @@ RUN npm ci
 COPY shared/ ./shared/
 COPY analytics-service/ ./analytics-service/
 
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
+    npm run build -w @ecommerce/shared && \
+    cp -r ./shared/src/generated ./shared/dist/generated
+
 WORKDIR /app/analytics-service
 
 
@@ -36,6 +40,7 @@ COPY analytics-service/package*.json ./analytics-service/
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/analytics-service/dist ./analytics-service/dist
+COPY --from=builder /app/shared/dist ./shared/dist
 
 WORKDIR /app/analytics-service
 

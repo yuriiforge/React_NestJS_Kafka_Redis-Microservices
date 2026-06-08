@@ -1,9 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import prisma from '@ecommerce/shared/src/prisma';
-import { PaymentCompletedEvent } from '@ecommerce/shared/src/events/payment-completed.event';
-import { DeliveryStartedEvent } from '@ecommerce/shared/src/events/delivery-started.event';
-import { KafkaTopic } from '@ecommerce/shared/src/events/kafka-topics.enum';
+import { prisma, PaymentCompletedEvent, DeliveryStartedEvent, KafkaTopic } from '@ecommerce/shared';
 
 @Injectable()
 export class DeliveryService {

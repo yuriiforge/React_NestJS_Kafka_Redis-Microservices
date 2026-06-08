@@ -11,65 +11,46 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // protected routes — JWT check first
+  // protected routes — JWT check runs before proxy
   app.use('/api/orders', jwtMiddleware);
   app.use('/api/products', jwtMiddleware);
   app.use('/api/search', jwtMiddleware);
   app.use('/api/analytics', jwtMiddleware);
   app.use('/api/events', jwtMiddleware);
 
-  // proxies
+  // single proxy — intercepts all /api/* before NestJS strips prefixes
   app.use(
-    '/api/auth',
     createProxyMiddleware({
-      target: 'http://auth-service:3006',
+      target: 'http://auth-service:3006', // default target, overridden by router
       changeOrigin: true,
-      pathRewrite: { '^/api/auth': '/auth' },
-    }),
-  );
-
-  app.use(
-    '/api/orders',
-    createProxyMiddleware({
-      target: 'http://order-service:3001',
-      changeOrigin: true,
-      pathRewrite: { '^/api/orders': '/orders' },
-    }),
-  );
-
-  app.use(
-    '/api/events',
-    createProxyMiddleware({
-      target: 'http://order-service:3001',
-      changeOrigin: true,
-      pathRewrite: { '^/api/events': '/events' },
-    }),
-  );
-
-  app.use(
-    '/api/products',
-    createProxyMiddleware({
-      target: 'http://product-service:3007',
-      changeOrigin: true,
-      pathRewrite: { '^/api/products': '/products' },
-    }),
-  );
-
-  app.use(
-    '/api/search',
-    createProxyMiddleware({
-      target: 'http://search-service:3005',
-      changeOrigin: true,
-      pathRewrite: { '^/api/search': '/search' },
-    }),
-  );
-
-  app.use(
-    '/api/analytics',
-    createProxyMiddleware({
-      target: 'http://analytics-service:3004',
-      changeOrigin: true,
-      pathRewrite: { '^/api/analytics': '/analytics' },
+      router: {
+        '/api/auth': 'http://auth-service:3006',
+        '/api/orders': 'http://order-service:3001',
+        '/api/events': 'http://order-service:3001',
+        '/api/products': 'http://product-service:3007',
+        '/api/search': 'http://search-service:3005',
+        '/api/analytics': 'http://analytics-service:3004',
+      },
+      pathRewrite: (path) => {
+        if (path.startsWith('/api/auth'))
+          return path.replace('/api/auth', '/auth');
+        if (path.startsWith('/api/orders'))
+          return path.replace('/api/orders', '/orders');
+        if (path.startsWith('/api/events'))
+          return path.replace('/api/events', '/events');
+        if (path.startsWith('/api/products'))
+          return path.replace('/api/products', '/products');
+        if (path.startsWith('/api/search'))
+          return path.replace('/api/search', '/search');
+        if (path.startsWith('/api/analytics'))
+          return path.replace('/api/analytics', '/analytics');
+        return path;
+      },
+      on: {
+        proxyReq: (proxyReq) => {
+          console.log('Proxying to:', proxyReq.path);
+        },
+      },
     }),
   );
 

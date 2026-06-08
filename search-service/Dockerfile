@@ -11,6 +11,10 @@ RUN npm ci
 COPY shared/ ./shared/
 COPY search-service/ ./search-service/
 
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
+    npm run build -w @ecommerce/shared && \
+    cp -r ./shared/src/generated ./shared/dist/generated
+
 WORKDIR /app/search-service
 
 
@@ -36,6 +40,7 @@ COPY search-service/package*.json ./search-service/
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/search-service/dist ./search-service/dist
+COPY --from=builder /app/shared/dist ./shared/dist
 
 WORKDIR /app/search-service
 

@@ -1,8 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { DeliveryService } from './delivery.service';
-import { PaymentCompletedEvent } from '@ecommerce/shared/src/events/payment-completed.event';
-import { KafkaTopic } from '@ecommerce/shared/src/events/kafka-topics.enum';
+import { PaymentCompletedEvent, KafkaTopic } from '@ecommerce/shared';
 
 @Controller()
 export class DeliveryController {

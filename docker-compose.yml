@@ -10,12 +10,19 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/2181"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     restart: unless-stopped
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     ports:
       - "9092:9092"
     environment:
@@ -27,10 +34,11 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/9092"]
       interval: 10s
       timeout: 10s
-      retries: 10
+      retries: 20
+      start_period: 60s
 
   kafka-init:
     image: confluentinc/cp-kafka:7.5.0
@@ -150,7 +158,7 @@ services:
     ports:
       - "3006:3006"
     env_file: ./auth-service/.env
-    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
@@ -165,7 +173,7 @@ services:
     ports:
       - "3007:3007"
     env_file: ./product-service/.env
-    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
@@ -178,7 +186,7 @@ services:
     ports:
       - "3001:3001"
     env_file: ./order-service/.env
-    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
@@ -193,7 +201,7 @@ services:
     ports:
       - "3002:3002"
     env_file: ./payment-service/.env
-    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
@@ -208,7 +216,7 @@ services:
     ports:
       - "3003:3003"
     env_file: ./delivery-service/.env
-    command: sh -c "npx prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
+    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && node dist/main.js"
     depends_on:
       postgres:
         condition: service_healthy
@@ -281,3 +289,5 @@ volumes:
   elasticsearch_data:
   prometheus_data:
   grafana_data:
+
+

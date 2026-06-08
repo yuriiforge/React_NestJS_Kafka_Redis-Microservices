@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
-import { Role } from '@ecommerce/shared/src/enums/role.enum';
+import { Role } from '@ecommerce/shared';
 
 interface CustomJwtPayload extends jwt.JwtPayload {
   userId: string;

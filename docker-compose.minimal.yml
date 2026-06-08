@@ -1,0 +1,85 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ecommerce
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+      target: dev
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    env_file: ./auth-service/.env
+    volumes:
+      - ./auth-service/src:/app/auth-service/src
+    command: sh -c "/app/node_modules/.bin/prisma migrate deploy --schema=/app/shared/prisma/schema.prisma && npm run start:dev"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+      target: dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file: ./api-gateway/.env
+    volumes:
+      - ./api-gateway/src:/app/api-gateway/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - auth-service
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres_data:
+  redis_data:

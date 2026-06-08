@@ -1,8 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import {
-  CurrentUser,
-  type RequestUser,
-} from '@ecommerce/shared/src/decorators/current-user.decorator';
+import { CurrentUser, type RequestUser } from '@ecommerce/shared';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';

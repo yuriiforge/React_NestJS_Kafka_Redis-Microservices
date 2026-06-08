@@ -1,7 +1,6 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Role } from '@ecommerce/shared/src/enums/role.enum';
-import { CustomJwtPayload } from '@ecommerce/shared/src/types/jwt-payload.type';
+import { Role, CustomJwtPayload } from '@ecommerce/shared';
 import { REDIS_CLIENT } from '../../redis/redis.provider';
 import { Redis } from 'ioredis';
 

@@ -1,6 +1,6 @@
 import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { OrderStatus } from '@ecommerce/shared/src/generated/prisma';
+import { OrderStatus } from '@ecommerce/shared';
 
 export class QueryOrderDto {
   @IsEnum(OrderStatus)

@@ -7,9 +7,8 @@ import {
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import bcrypt from 'bcryptjs';
-import prisma from '@ecommerce/shared/src/prisma';
+import { Role, prisma } from '@ecommerce/shared';
 import { TokenService } from './token/token.service';
-import { Role } from '@ecommerce/shared/src/enums/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -33,7 +32,7 @@ export class AuthService {
       userId: user.id,
       username: user.username,
       email: user.email,
-      role: user.role as unknown as Role,
+      role: user.role,
     });
   }
 
@@ -71,7 +70,7 @@ export class AuthService {
       userId: user.id,
       username: user.username,
       email: user.email,
-      role: user.role as unknown as Role,
+      role: user.role,
     });
   }
 

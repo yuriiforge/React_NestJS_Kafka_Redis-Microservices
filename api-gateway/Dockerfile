@@ -11,6 +11,10 @@ RUN npm ci
 COPY shared/ ./shared/
 COPY api-gateway/ ./api-gateway/
 
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
+    /app/node_modules/.bin/tsc --project /app/shared/tsconfig.json && \
+    cp -r ./shared/src/generated ./shared/dist/generated
+
 WORKDIR /app/api-gateway
 
 
@@ -36,6 +40,7 @@ COPY api-gateway/package*.json ./api-gateway/
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/api-gateway/dist ./api-gateway/dist
+COPY --from=builder /app/shared/dist ./shared/dist
 
 WORKDIR /app/api-gateway
 

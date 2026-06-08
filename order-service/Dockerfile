@@ -11,6 +11,10 @@ RUN npm ci
 COPY shared/ ./shared/
 COPY order-service/ ./order-service/
 
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
+    npm run build -w @ecommerce/shared && \
+    cp -r ./shared/src/generated ./shared/dist/generated
+
 WORKDIR /app/order-service
 
 
@@ -36,6 +40,8 @@ COPY order-service/package*.json ./order-service/
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/order-service/dist ./order-service/dist
+COPY --from=builder /app/shared/dist ./shared/dist
+COPY shared/prisma ./shared/prisma
 
 WORKDIR /app/order-service
 

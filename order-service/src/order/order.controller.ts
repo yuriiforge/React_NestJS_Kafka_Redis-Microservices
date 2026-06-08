@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards, Headers } 
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
-import { AuthGuard } from '@ecommerce/shared/src/guards/auth.guard';
+import { AuthGuard } from '@ecommerce/shared';
 
 @Controller('orders')
 @UseGuards(AuthGuard)
