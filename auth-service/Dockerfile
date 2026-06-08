@@ -6,7 +6,7 @@ COPY package*.json ./
 COPY shared/package*.json ./shared/
 COPY auth-service/package*.json ./auth-service/
 
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY shared/ ./shared/
 COPY auth-service/ ./auth-service/
@@ -37,7 +37,7 @@ COPY package*.json ./
 COPY shared/package*.json ./shared/
 COPY auth-service/package*.json ./auth-service/
 
-RUN npm ci --omit=dev
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 COPY --from=builder /app/auth-service/dist ./auth-service/dist
 COPY --from=builder /app/shared/dist ./shared/dist

@@ -6,7 +6,7 @@ COPY package*.json ./
 COPY shared/package*.json ./shared/
 COPY product-service/package*.json ./product-service/
 
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY shared/ ./shared/
 COPY product-service/ ./product-service/
@@ -37,7 +37,7 @@ COPY package*.json ./
 COPY shared/package*.json ./shared/
 COPY product-service/package*.json ./product-service/
 
-RUN npm ci --omit=dev
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 COPY --from=builder /app/product-service/dist ./product-service/dist
 COPY --from=builder /app/shared/dist ./shared/dist

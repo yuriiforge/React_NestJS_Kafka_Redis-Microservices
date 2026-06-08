@@ -20,14 +20,4 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "watchOptions": {
-    "synchronousWatchDirectory": true,
-    "excludeDirectories": [
-      "**/node_modules",
-      "dist"
-    ],
-    "fallbackPolling": "fixedPollingInterval",
-    "watchDirectory": "fixedPollingInterval",
-    "watchFile": "fixedPollingInterval"
-  }
 }
