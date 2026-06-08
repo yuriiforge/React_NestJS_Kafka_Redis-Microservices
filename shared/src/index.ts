@@ -2,7 +2,12 @@
 export { default as prisma } from './prisma';
 
 // Generated Prisma types
-export { OrderStatus, PaymentStatus, DeliveryStatus, Role } from './generated/prisma';
+export {
+  OrderStatus,
+  PaymentStatus,
+  DeliveryStatus,
+  Role,
+} from './generated/prisma';
 
 // Types
 export type { CustomJwtPayload } from './types/jwt-payload.type';
@@ -14,6 +19,9 @@ export { AdminGuard } from './guards/admin.guard';
 // Decorators
 export { CurrentUser } from './decorators/current-user.decorator';
 export type { RequestUser } from './decorators/current-user.decorator';
+
+// Throttler
+export { throttlerConfig } from './throttler.config';
 
 // Kafka
 export { KafkaTopic } from './events/kafka-topics.enum';

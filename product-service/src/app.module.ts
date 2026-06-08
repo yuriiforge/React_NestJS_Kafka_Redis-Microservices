@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { envValidationSchema } from './config/env.validation';
 import { ProductModule } from './product/product.module';
+import { throttlerConfig } from '@ecommerce/shared';
 
 @Module({
   imports: [
@@ -10,7 +13,9 @@ import { ProductModule } from './product/product.module';
       validationSchema: envValidationSchema,
       validationOptions: { abortEarly: true },
     }),
+    ThrottlerModule.forRoot(throttlerConfig),
     ProductModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
