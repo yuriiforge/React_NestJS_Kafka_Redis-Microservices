@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
 import AuthPage from '@/pages/Auth';
 import ShopPage from '@/pages/Shop';
@@ -41,23 +42,59 @@ function RootRoute() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <Routes>
         {/* Public */}
         <Route path="/auth" element={<AuthPage />} />
 
-        {/* User home → Shop | Admin home → /orders */}
+        {/* User home -> Shop | Admin home -> /orders */}
         <Route path="/" element={<RootRoute />} />
 
         {/* User + Admin */}
-        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin only */}
-        <Route path="/analytics" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
-        <Route path="/search"    element={<AdminRoute><SearchPage /></AdminRoute>} />
-        <Route path="/products"  element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
+        <Route
+          path="/analytics"
+          element={
+            <AdminRoute>
+              <AnalyticsPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <AdminRoute>
+              <SearchPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <AdminRoute>
+              <AdminProductsPage />
+            </AdminRoute>
+          }
+        />
 
         {/* User only */}
-        <Route path="/product-search" element={<UserOnlyRoute><ProductSearchPage /></UserOnlyRoute>} />
+        <Route
+          path="/product-search"
+          element={
+            <UserOnlyRoute>
+              <ProductSearchPage />
+            </UserOnlyRoute>
+          }
+        />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

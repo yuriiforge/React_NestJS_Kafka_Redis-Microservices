@@ -5,24 +5,25 @@ import FormField from '@/components/FormField';
 import { loginSchema, registerSchema } from '@/validation/auth.schemas';
 import { authApi } from '@/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
+import toast from 'react-hot-toast';
+import { toastError } from '@/lib/errorHandler';
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const setTokens = useAuthStore((s) => s.setTokens);
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [error, setError] = useState<string | null>(null);
 
   const loginForm = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
     onSubmit: async (values) => {
-      setError(null);
       try {
         const { data } = await authApi.login(values);
         setTokens(data.accessToken, data.refreshToken);
+        toast.success('You are logged in!');
         void navigate('/');
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Something went wrong');
+        toastError(err);
       }
     },
   });
@@ -37,13 +38,13 @@ export default function AuthPage() {
     },
     validationSchema: registerSchema,
     onSubmit: async (values) => {
-      setError(null);
       try {
         const { data } = await authApi.register(values);
         setTokens(data.accessToken, data.refreshToken);
+        toast.success('You had successfully registered!');
         void navigate('/');
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Something went wrong');
+        toastError(err);
       }
     },
   });
@@ -57,19 +58,13 @@ export default function AuthPage() {
         <div className="flex mb-6 border-b">
           <button
             className={`pb-2 px-4 font-medium ${mode === 'login' ? 'border-b-2 border-black' : 'text-gray-400'}`}
-            onClick={() => {
-              setMode('login');
-              setError(null);
-            }}
+            onClick={() => setMode('login')}
           >
             Login
           </button>
           <button
             className={`pb-2 px-4 font-medium ${mode === 'register' ? 'border-b-2 border-black' : 'text-gray-400'}`}
-            onClick={() => {
-              setMode('register');
-              setError(null);
-            }}
+            onClick={() => setMode('register')}
           >
             Register
           </button>
@@ -118,8 +113,6 @@ export default function AuthPage() {
               />
             </>
           )}
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
