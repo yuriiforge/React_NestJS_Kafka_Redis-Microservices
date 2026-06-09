@@ -266,8 +266,12 @@ services:
       - "3005:3005"
     environment:
       PORT: 3005
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce?schema=public
+      ELASTICSEARCH_URL: http://elasticsearch:9200
     depends_on:
       elasticsearch:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   api-gateway:
