@@ -34,19 +34,22 @@ export class ElasticsearchService implements OnModuleInit {
     const exists = await this.client.indices.exists({ index: INDEX });
 
     if (!exists) {
-      await this.client.indices.create({
-        index: INDEX,
-        mappings: {
-          properties: {
-            type:      { type: 'keyword' },
-            timestamp: { type: 'date' },
-            orderId:   { type: 'keyword' },
-            userId:    { type: 'keyword' },
+      try {
+        await this.client.indices.create({
+          index: INDEX,
+          mappings: {
+            properties: {
+              type:      { type: 'keyword' },
+              timestamp: { type: 'date' },
+              orderId:   { type: 'keyword' },
+              userId:    { type: 'keyword' },
+            },
           },
-        },
-      });
-
-      this.logger.log(`Created Elasticsearch index: ${INDEX}`);
+        });
+        this.logger.log(`Created Elasticsearch index: ${INDEX}`);
+      } catch (err: any) {
+        if (err?.meta?.statusCode !== 400) throw err;
+      }
     }
   }
 }

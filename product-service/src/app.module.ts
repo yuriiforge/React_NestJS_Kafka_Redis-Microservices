@@ -13,7 +13,7 @@ import { throttlerConfig } from '@ecommerce/shared';
       validationSchema: envValidationSchema,
       validationOptions: { abortEarly: true },
     }),
-    ThrottlerModule.forRoot(throttlerConfig),
+    ThrottlerModule.forRoot([...throttlerConfig]),
     ProductModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

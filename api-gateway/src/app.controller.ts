@@ -23,13 +23,17 @@ export class AppController {
         dom_id: '#swagger-ui',
         deepLinking: true,
         urls: [
-          { url: '/docs/auth-spec',     name: 'Auth'     },
-          { url: '/docs/products-spec', name: 'Products' },
-          { url: '/docs/orders-spec',   name: 'Orders'   },
+          { url: '/docs/auth-spec',       name: 'Auth'       },
+          { url: '/docs/products-spec',   name: 'Products'   },
+          { url: '/docs/orders-spec',     name: 'Orders'     },
+          { url: '/docs/payments-spec',   name: 'Payments'   },
+          { url: '/docs/deliveries-spec', name: 'Deliveries' },
+          { url: '/docs/analytics-spec',  name: 'Analytics'  },
+          { url: '/docs/search-spec',     name: 'Search'     },
         ],
-        "urls.primaryName": "Auth",
+        'urls.primaryName': 'Auth',
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
-        layout: "StandaloneLayout",
+        layout: 'StandaloneLayout',
       });
     </script>
   </body>
