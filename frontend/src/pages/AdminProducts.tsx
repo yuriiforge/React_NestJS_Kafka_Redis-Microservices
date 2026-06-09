@@ -39,7 +39,9 @@ export default function AdminProductsPage() {
   useEffect(() => { load(); }, [search]);
 
   const formik = useFormik<ProductPayload>({
-    initialValues: editing ? { ...editing } : EMPTY,
+    initialValues: editing
+      ? { name: editing.name, description: editing.description, price: editing.price, stock: editing.stock, category: editing.category, isActive: editing.isActive }
+      : EMPTY,
     enableReinitialize: true,
     validationSchema: schema,
     onSubmit: async (values, helpers) => {

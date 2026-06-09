@@ -58,7 +58,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
     (async () => {
       try {
         const res = await fetch(
-          `http://localhost:8000/api/orders/${orderId}/events`,
+          `/api/orders/${orderId}/events`,
           {
             headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' },
             signal: controller.signal,
