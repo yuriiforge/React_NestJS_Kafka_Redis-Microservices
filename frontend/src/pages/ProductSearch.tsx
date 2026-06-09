@@ -4,28 +4,26 @@ import { productsApi } from '@/api/products.api';
 import { useUserCartStore } from '@/store/user-cart.store';
 import type { Product } from '@/types';
 
-const CATEGORIES = ['All', 'Electronics', 'Sports', 'Home', 'Accessories'];
-
 const EMOJI: Record<string, string> = {
   Electronics: '🎧', Sports: '👟', Home: '🏠', Accessories: '🎒',
 };
 
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="text-yellow-400 text-xs">
-      {'★'.repeat(Math.floor(rating))}{'☆'.repeat(5 - Math.floor(rating))}
-    </span>
-  );
-}
-
 export default function ProductSearchPage() {
   const [query, setQuery] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState('All');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [inStock, setInStock] = useState(false);
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { addProduct, items } = useUserCartStore();
+
+  useEffect(() => {
+    productsApi.categories().then((res) => setCategories(res.data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -37,13 +35,20 @@ export default function ProductSearchPage() {
     debounceRef.current = setTimeout(() => {
       setLoading(true);
       productsApi
-        .list({ search: query, category: category !== 'All' ? category : undefined, limit: 50 })
+        .list({
+          search: query,
+          category: category !== 'All' ? category : undefined,
+          minPrice: minPrice !== '' ? Number(minPrice) : undefined,
+          maxPrice: maxPrice !== '' ? Number(maxPrice) : undefined,
+          inStock: inStock || undefined,
+          limit: 50,
+        })
         .then((res) => { setResults(res.data.items); setSearched(true); })
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
     }, 400);
     return () => clearTimeout(debounceRef.current);
-  }, [query, category]);
+  }, [query, category, minPrice, maxPrice, inStock]);
 
   function handleAdd(p: Product) {
     addProduct({ id: p.id, name: p.name, price: p.price, stock: p.stock });
@@ -63,7 +68,7 @@ export default function ProductSearchPage() {
           <div className="bg-white rounded-xl border p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Category</p>
             <div className="flex flex-col gap-2">
-              {CATEGORIES.map((c) => (
+              {['All', ...categories].map((c) => (
                 <label key={c} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="radio"
@@ -76,6 +81,41 @@ export default function ProductSearchPage() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div className="bg-white rounded-xl border p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Price range</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Min"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                min={0}
+                className="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-black"
+              />
+              <span className="text-gray-400 text-xs">–</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                min={0}
+                className="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border p-4">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={inStock}
+                onChange={(e) => setInStock(e.target.checked)}
+                className="rounded"
+              />
+              In stock only
+            </label>
           </div>
         </aside>
 
@@ -113,9 +153,6 @@ export default function ProductSearchPage() {
                       <div>
                         <p className="text-xs text-gray-400 uppercase tracking-wide">{p.category}</p>
                         <h3 className="font-medium text-gray-900 mt-0.5">{p.name}</h3>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Stars rating={4} />
-                        </div>
                       </div>
                       <div className="flex items-center justify-between mt-auto">
                         <span className="text-lg font-semibold">${p.price.toFixed(2)}</span>

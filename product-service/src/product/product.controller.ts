@@ -11,6 +11,13 @@ import { AdminGuard } from '@ecommerce/shared';
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
+  @Get('categories')
+  @ApiOperation({ summary: 'List distinct active product categories' })
+  @ApiResponse({ status: 200, description: 'Array of category strings' })
+  getCategories() {
+    return this.productService.getCategories();
+  }
+
   @Get()
   @ApiOperation({ summary: 'List products with optional filtering and pagination' })
   @ApiResponse({ status: 200, description: 'Paginated product list' })

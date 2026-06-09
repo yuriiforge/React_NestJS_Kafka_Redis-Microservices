@@ -118,6 +118,11 @@ export class AnalyticsService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Delivery tracked: ${event.orderId} → ${event.status}`);
   }
 
+  /**
+   * Returns a mix of live window stats (from in-memory event buffers) and
+   * all-time totals (from the DB). Window stats cover the last `windowSeconds`
+   * seconds; in-memory records older than that are pruned on every call.
+   */
   async getStats(windowSeconds = 60) {
     const since = Date.now() - windowSeconds * 1000;
 
@@ -139,7 +144,6 @@ export class AnalyticsService implements OnModuleInit, OnModuleDestroy {
 
     this.prune(since);
 
-    // All-time stats from DB
     const [totalOrders, revenueAgg] = await Promise.all([
       prisma.order.count(),
       prisma.order.aggregate({
@@ -152,7 +156,6 @@ export class AnalyticsService implements OnModuleInit, OnModuleDestroy {
 
     return {
       windowSeconds,
-      // window (live) stats
       ordersCount: recentPayments.length,
       successCount: successful.length,
       failedCount: failed.length,
@@ -160,7 +163,6 @@ export class AnalyticsService implements OnModuleInit, OnModuleDestroy {
       windowRevenue: Math.round(windowRevenue * 100) / 100,
       successRate: Math.round(successRate * 100) / 100,
       avgPaymentTimeSeconds: Math.round(avgPaymentTimeMs / 1000),
-      // all-time DB stats
       allTimeOrders: totalOrders,
       allTimeRevenue: Math.round(allTimeRevenue * 100) / 100,
       avgOrderValue: totalOrders > 0

@@ -4,6 +4,9 @@ import type { Product, ProductsResponse } from '@/types';
 export interface ProductsParams {
   search?: string;
   category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
   page?: number;
   limit?: number;
 }
@@ -18,6 +21,9 @@ export interface ProductPayload {
 }
 
 export const productsApi = {
+  categories: () =>
+    api.get<string[]>('/products/categories'),
+
   list: (params?: ProductsParams) =>
     api.get<ProductsResponse>('/products', { params }),
 

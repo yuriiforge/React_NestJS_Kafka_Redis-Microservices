@@ -5,8 +5,6 @@ import toast from 'react-hot-toast';
 import { productsApi, type ProductPayload } from '@/api/products.api';
 import type { Product } from '@/types';
 
-const CATEGORIES = ['Electronics', 'Sports', 'Home', 'Accessories'];
-
 const schema = Yup.object({
   name:        Yup.string().min(2).required('Required'),
   description: Yup.string().min(10).required('Required'),
@@ -16,24 +14,31 @@ const schema = Yup.object({
   isActive:    Yup.boolean(),
 });
 
-const EMPTY: ProductPayload = { name: '', description: '', price: 0, stock: 0, category: 'Electronics', isActive: true };
+const EMPTY: ProductPayload = { name: '', description: '', price: 0, stock: 0, category: '', isActive: true };
+
+type FormState = null | 'create' | Product;
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [list, setList] = useState<{ items: Product[]; total: number; loading: boolean }>(
+    { items: [], total: 0, loading: true },
+  );
+  const [categories, setCategories] = useState<string[]>([]);
   const [search, setSearch] = useState('');
-  const [editing, setEditing] = useState<Product | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState<FormState>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const editing = form !== null && form !== 'create' ? form : null;
+
+  useEffect(() => {
+    productsApi.categories().then((res) => setCategories(res.data)).catch(() => {});
+  }, []);
+
   function load() {
-    setLoading(true);
+    setList((s) => ({ ...s, loading: true }));
     productsApi
       .list({ search: search || undefined, limit: 50 })
-      .then((res) => { setProducts(res.data.items); setTotal(res.data.total); })
-      .catch(() => toast.error('Failed to load products'))
-      .finally(() => setLoading(false));
+      .then((res) => setList({ items: res.data.items, total: res.data.total, loading: false }))
+      .catch(() => { toast.error('Failed to load products'); setList((s) => ({ ...s, loading: false })); });
   }
 
   useEffect(() => { load(); }, [search]);
@@ -48,15 +53,14 @@ export default function AdminProductsPage() {
       try {
         if (editing) {
           const res = await productsApi.update(editing.id, values);
-          setProducts((p) => p.map((x) => x.id === editing.id ? res.data : x));
+          setList((s) => ({ ...s, items: s.items.map((x) => x.id === editing.id ? res.data : x) }));
           toast.success('Product updated');
         } else {
           const res = await productsApi.create(values);
-          setProducts((p) => [res.data, ...p]);
+          setList((s) => ({ ...s, items: [res.data, ...s.items], total: s.total + 1 }));
           toast.success('Product created');
         }
-        setFormOpen(false);
-        setEditing(null);
+        setForm(null);
         helpers.resetForm();
       } catch {
         toast.error('Failed to save product');
@@ -67,8 +71,7 @@ export default function AdminProductsPage() {
   async function handleDelete(id: string) {
     try {
       await productsApi.remove(id);
-      setProducts((p) => p.filter((x) => x.id !== id));
-      setTotal((t) => t - 1);
+      setList((s) => ({ ...s, items: s.items.filter((x) => x.id !== id), total: s.total - 1 }));
       toast.success('Deleted');
     } catch {
       toast.error('Failed to delete');
@@ -78,14 +81,8 @@ export default function AdminProductsPage() {
   }
 
   function openCreate() {
-    setEditing(null);
-    formik.resetForm({ values: EMPTY });
-    setFormOpen(true);
-  }
-
-  function openEdit(p: Product) {
-    setEditing(p);
-    setFormOpen(true);
+    formik.resetForm({ values: { ...EMPTY, category: categories[0] ?? '' } });
+    setForm('create');
   }
 
   const field = (name: keyof ProductPayload) =>
@@ -109,13 +106,12 @@ export default function AdminProductsPage() {
       </div>
 
       <div className="px-6 py-8 flex flex-col gap-6">
-        {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Total',      value: total },
-            { label: 'Active',     value: products.filter((p) => p.isActive).length },
-            { label: 'Out of stock', value: products.filter((p) => p.stock === 0).length },
-            { label: 'Low stock',  value: products.filter((p) => p.stock > 0 && p.stock < 10).length },
+            { label: 'Total',        value: list.total },
+            { label: 'Active',       value: list.items.filter((p) => p.isActive).length },
+            { label: 'Out of stock', value: list.items.filter((p) => p.stock === 0).length },
+            { label: 'Low stock',    value: list.items.filter((p) => p.stock > 0 && p.stock < 10).length },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-xl border px-4 py-3">
               <p className="text-xs text-gray-400 uppercase tracking-wide">{s.label}</p>
@@ -135,7 +131,7 @@ export default function AdminProductsPage() {
             />
           </div>
 
-          {loading ? (
+          {list.loading ? (
             <div className="py-12 text-center text-gray-400 text-sm">Loading…</div>
           ) : (
             <table className="w-full text-sm">
@@ -149,7 +145,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {products.map((p) => (
+                {list.items.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-gray-500">{p.category}</td>
@@ -158,17 +154,13 @@ export default function AdminProductsPage() {
                       <span className={p.stock < 10 ? 'text-orange-500 font-medium' : ''}>{p.stock}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                        }`}
-                      >
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                         {p.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <button onClick={() => openEdit(p)} className="text-xs text-blue-600 hover:underline">
+                        <button onClick={() => setForm(p)} className="text-xs text-blue-600 hover:underline">
                           Edit
                         </button>
                         {deleting === p.id ? (
@@ -190,20 +182,19 @@ export default function AdminProductsPage() {
             </table>
           )}
 
-          {!loading && products.length === 0 && (
+          {!list.loading && list.items.length === 0 && (
             <div className="py-12 text-center text-gray-400 text-sm">No products found</div>
           )}
         </div>
       </div>
 
-      {/* Create / Edit modal */}
-      {formOpen && (
+      {form !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setFormOpen(false)} />
+          <div className="absolute inset-0 bg-black/40" onClick={() => setForm(null)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-semibold">{editing ? 'Edit product' : 'New product'}</h2>
-              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-black">✕</button>
+              <button onClick={() => setForm(null)} className="text-gray-400 hover:text-black">✕</button>
             </div>
 
             <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
@@ -254,7 +245,7 @@ export default function AdminProductsPage() {
                   {...formik.getFieldProps('category')}
                   className="mt-1 w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black"
                 >
-                  {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  {categories.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
 
@@ -271,7 +262,7 @@ export default function AdminProductsPage() {
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
-                  onClick={() => setFormOpen(false)}
+                  onClick={() => setForm(null)}
                   className="flex-1 border rounded-lg py-2 text-sm hover:bg-gray-50"
                 >
                   Cancel

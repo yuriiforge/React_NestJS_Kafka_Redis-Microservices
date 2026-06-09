@@ -173,6 +173,11 @@ export class SearchService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * DLQ messages wrap the original Kafka message in `originalMessage`.
+   * The orderId may be a top-level string field, or nested inside a stringified
+   * `value` buffer depending on how the producer serialized it.
+   */
   private async handleDLQ(payload: Record<string, unknown>) {
     const original = payload.originalMessage as Record<string, unknown> | undefined;
     if (!original) return;

@@ -41,7 +41,6 @@ export class AuthService {
   }
 
   async register(data: RegisterDto) {
-    // 1. check if email already taken
     const existing = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -50,10 +49,8 @@ export class AuthService {
       throw new ConflictException('Email already exists');
     }
 
-    // 2. hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // 3. create user in DB
     const user = await prisma.user.create({
       data: {
         email: data.email,
@@ -65,7 +62,6 @@ export class AuthService {
       },
     });
 
-    // 4. issue tokens same as login
     return this.tokenService.generateTokens({
       userId: user.id,
       username: user.username,

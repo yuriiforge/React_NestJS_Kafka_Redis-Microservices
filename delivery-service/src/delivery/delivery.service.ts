@@ -19,8 +19,8 @@ import {
 } from '@ecommerce/shared';
 
 const COURIERS = ['John Smith', 'Maria Garcia', 'Liam Brown', 'Anna Müller'];
-const DELAY_SHIPPED_MS = 5_000;
-const DELAY_DELIVERED_MS = 10_000;
+/** Simulated delay between each delivery stage (PREPARING → SHIPPED → DELIVERED), per spec. */
+const STAGE_DELAY_MS = 5_000;
 
 function randomCourier(): string {
   return COURIERS[Math.floor(Math.random() * COURIERS.length)];
@@ -76,14 +76,14 @@ export class DeliveryService implements OnModuleInit, OnModuleDestroy {
 
     await this.publishStatus(event.orderId, OrderDeliveryStatus.PREPARING, courier);
 
-    await sleep(DELAY_SHIPPED_MS);
+    await sleep(STAGE_DELAY_MS);
     await prisma.delivery.update({
       where: { id: delivery.id },
       data: { status: DeliveryStatus.IN_TRANSIT },
     });
     await this.publishStatus(event.orderId, OrderDeliveryStatus.SHIPPED, courier);
 
-    await sleep(DELAY_DELIVERED_MS);
+    await sleep(STAGE_DELAY_MS);
     await prisma.delivery.update({
       where: { id: delivery.id },
       data: { status: DeliveryStatus.DELIVERED },

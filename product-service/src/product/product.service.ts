@@ -7,11 +7,18 @@ import { QueryProductDto } from './dto/query-product.dto';
 @Injectable()
 export class ProductService {
   async findAll(query: QueryProductDto) {
-    const { search, category, page = 1, limit = 20 } = query;
+    const { search, category, minPrice, maxPrice, inStock, page = 1, limit = 20 } = query;
 
     const where = {
       isActive: true,
       ...(category && { category }),
+      ...(inStock === true && { stock: { gt: 0 } }),
+      ...((minPrice !== undefined || maxPrice !== undefined) && {
+        price: {
+          ...(minPrice !== undefined && { gte: minPrice }),
+          ...(maxPrice !== undefined && { lte: maxPrice }),
+        },
+      }),
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
@@ -56,5 +63,15 @@ export class ProductService {
   async remove(id: string) {
     await this.findOne(id);
     return await prisma.product.delete({ where: { id } });
+  }
+
+  async getCategories(): Promise<string[]> {
+    const rows = await prisma.product.findMany({
+      where: { isActive: true },
+      select: { category: true },
+      distinct: ['category'],
+      orderBy: { category: 'asc' },
+    });
+    return rows.map((r) => r.category);
   }
 }

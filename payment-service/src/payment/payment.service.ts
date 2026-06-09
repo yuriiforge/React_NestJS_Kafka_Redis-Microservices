@@ -29,6 +29,7 @@ const paymentsTotal: Counter<string> =
     labelNames: ['result'],
   });
 
+/** Simulated payment success rate per spec: 80% SUCCESS, 20% FAILED. */
 const SUCCESS_RATE = 0.8;
 
 @Injectable()

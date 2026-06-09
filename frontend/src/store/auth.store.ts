@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+// Reads the role claim directly from the JWT payload without verifying the signature.
+// Authorization is enforced server-side; this is only for UI routing decisions.
 function decodeRole(token: string | null): string | null {
   if (!token) return null;
   try {

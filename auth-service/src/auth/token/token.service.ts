@@ -50,17 +50,15 @@ export class TokenService {
   }
 
   async refreshToken(userId: string, refreshToken: string) {
-    // check if refresh token exists in Redis
     const stored = await this.redis.get(`refresh:${userId}`);
 
     if (!stored || stored !== refreshToken) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // get user data from the token payload
+    // decode without re-verifying — token is trusted because it matched the Redis value
     const payload = this.jwtService.decode<CustomJwtPayload>(refreshToken);
 
-    // issue new token pair
     return this.generateTokens({
       userId: payload.userId,
       email: payload.email,
