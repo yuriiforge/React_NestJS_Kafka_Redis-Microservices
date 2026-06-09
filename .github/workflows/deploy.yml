@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
 
-# Prevent two deploys running simultaneously
 concurrency:
   group: production
   cancel-in-progress: false
@@ -20,20 +19,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Inject production secrets ──────────────────────────
-      # All other env vars (DB URL, Kafka, ES) use Docker-internal
-      # addresses that are safe to keep in the repo. Only JWT_SECRET
-      # must come from GitHub Secrets (Settings → Secrets → Actions).
+      # ── 2. Restore .env files from server ─────────────────────
+      # .env files are gitignored. They live at ~/envs/ on the EC2
+      # instance and are copied into the workspace on every deploy.
+      - name: Copy env files
+        run: |
+          cp ~/envs/auth-service.env        auth-service/.env
+          cp ~/envs/api-gateway.env         api-gateway/.env
+          cp ~/envs/product-service.env     product-service/.env
+          cp ~/envs/order-service.env       order-service/.env
+          cp ~/envs/payment-service.env     payment-service/.env
+          cp ~/envs/delivery-service.env    delivery-service/.env
+          cp ~/envs/analytics-service.env   analytics-service/.env
+          cp ~/envs/search-service.env      search-service/.env
+
+      # ── 3. Inject production secrets ──────────────────────────
       - name: Patch JWT_SECRET
         run: |
           sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${{ secrets.JWT_SECRET }}|" auth-service/.env
           sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${{ secrets.JWT_SECRET }}|" api-gateway/.env
 
-      # ── 3. Build & start ──────────────────────────────────────
+      # ── 4. Build & start ──────────────────────────────────────
       - name: Build images and restart containers
         run: docker compose up --build -d
 
-      # ── 4. Health check ───────────────────────────────────────
+      # ── 5. Health check ───────────────────────────────────────
       - name: Wait for services to become healthy
         run: |
           echo "Waiting 30 s for containers to initialise..."
@@ -46,7 +56,6 @@ jobs:
             | python3 -c "
           import sys, json
           data = sys.stdin.read().strip()
-          # docker compose ps --format json returns one JSON object per line
           services = [json.loads(l) for l in data.splitlines() if l.strip()]
           failed = [s['Name'] for s in services if s.get('State') != 'running']
           print('\n'.join(failed))
@@ -59,6 +68,6 @@ jobs:
           fi
           echo "All containers running."
 
-      # ── 5. Cleanup ────────────────────────────────────────────
+      # ── 6. Cleanup ────────────────────────────────────────────
       - name: Remove dangling images
         run: docker image prune -f
