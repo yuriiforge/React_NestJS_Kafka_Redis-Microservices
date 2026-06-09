@@ -11,7 +11,9 @@ const DELIVERY_TO_ORDER: Record<string, Order['status']> = {
 interface OrdersStore {
   orders: Order[];
   loading: boolean;
-  fetchOrders: () => Promise<void>;
+  total: number;
+  totalPages: number;
+  fetchOrders: (page?: number, limit?: number) => Promise<void>;
   placeOrder: (items: CreateOrderItem[]) => Promise<Order>;
   updateStatus: (orderId: string, deliveryStatus: string) => void;
   subscribeToOrder: (orderId: string) => () => void;
@@ -20,12 +22,14 @@ interface OrdersStore {
 export const useOrdersStore = create<OrdersStore>((set, get) => ({
   orders: [],
   loading: false,
+  total: 0,
+  totalPages: 1,
 
-  fetchOrders: async () => {
+  fetchOrders: async (page = 1, limit = 10) => {
     set({ loading: true });
     try {
-      const res = await ordersApi.list();
-      set({ orders: res.data.items });
+      const res = await ordersApi.list({ page, limit });
+      set({ orders: res.data.items, total: res.data.total, totalPages: res.data.totalPages });
     } finally {
       set({ loading: false });
     }

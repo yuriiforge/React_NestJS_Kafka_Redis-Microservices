@@ -8,9 +8,14 @@ export interface CreateOrderItem {
   quantity: number;
 }
 
+export interface OrdersParams {
+  page?: number;
+  limit?: number;
+}
+
 export const ordersApi = {
-  list: () =>
-    api.get<OrdersResponse>('/orders'),
+  list: (params?: OrdersParams) =>
+    api.get<OrdersResponse>('/orders', { params }),
 
   get: (id: string) =>
     api.get<Order>(`/orders/${id}`),

@@ -22,13 +22,36 @@ export default function AnalyticsPage() {
       ]
     : [];
 
+  const statCards = [
+    {
+      label: 'Total Orders',
+      value: stats?.allTimeOrders ?? '—',
+      sub: 'all time',
+    },
+    {
+      label: 'Total Revenue',
+      value: stats ? `$${stats.allTimeRevenue.toFixed(2)}` : '—',
+      sub: 'all time',
+    },
+    {
+      label: 'Average Order',
+      value: stats ? `$${stats.avgOrderValue.toFixed(2)}` : '—',
+      sub: 'per order',
+    },
+    {
+      label: 'Payment Time',
+      value: stats ? `${stats.avgPaymentTimeSeconds}s` : '—',
+      sub: `last ${stats?.windowSeconds ?? 60}s window`,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Analytics</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            Last 60 s window · refreshes every 10 s
+            All-time totals · live window refreshes every 10 s
           </p>
         </div>
         <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
@@ -39,23 +62,20 @@ export default function AnalyticsPage() {
       <div className="px-6 py-8 flex flex-col gap-8">
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Orders (window)',  value: stats?.ordersCount ?? '—' },
-            { label: 'Revenue',          value: stats ? `$${stats.totalRevenue.toFixed(2)}` : '—' },
-            { label: 'Success rate',     value: stats ? `${(stats.successRate * 100).toFixed(0)}%` : '—' },
-            { label: 'Delivered',        value: stats?.deliveredCount ?? '—' },
-          ].map((s) => (
+          {statCards.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border px-5 py-4">
               <p className="text-xs text-gray-400 uppercase tracking-wide">{s.label}</p>
               <p className="text-2xl font-semibold mt-1">{s.value}</p>
+              <p className="text-xs text-gray-400 mt-1">{s.sub}</p>
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Line chart – orders over time */}
+          {/* Line chart – orders / min */}
           <div className="lg:col-span-2 bg-white rounded-xl border p-5">
-            <p className="text-sm font-medium mb-4">Orders over time</p>
+            <p className="text-sm font-medium mb-1">Orders / min</p>
+            <p className="text-xs text-gray-400 mb-4">60 s rolling window, sampled every 10 s</p>
             {history.length < 2 ? (
               <div className="h-48 flex items-center justify-center text-sm text-gray-400">
                 Collecting data…
@@ -70,6 +90,7 @@ export default function AnalyticsPage() {
                   <Line
                     type="monotone"
                     dataKey="orders"
+                    name="Orders/min"
                     stroke="#000"
                     strokeWidth={2}
                     dot={false}
@@ -79,12 +100,15 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Pie chart – payment success */}
+          {/* Pie chart – payment success rate */}
           <div className="bg-white rounded-xl border p-5">
-            <p className="text-sm font-medium mb-4">Payment outcome</p>
+            <p className="text-sm font-medium mb-1">Payment Success Rate</p>
+            <p className="text-xs text-gray-400 mb-4">
+              {stats ? `${(stats.successRate * 100).toFixed(0)}% success` : 'No data yet'}
+            </p>
             {(stats?.ordersCount ?? 0) === 0 ? (
               <div className="h-48 flex items-center justify-center text-sm text-gray-400">
-                No data yet
+                No payments in window
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={192}>
@@ -111,14 +135,15 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Payment breakdown */}
-        {stats && (
+        {stats && stats.ordersCount > 0 && (
           <div className="bg-white rounded-xl border p-5">
-            <p className="text-sm font-medium mb-4">Payment breakdown</p>
+            <p className="text-sm font-medium mb-1">Payment breakdown</p>
+            <p className="text-xs text-gray-400 mb-4">Last {stats.windowSeconds}s window</p>
             <div className="flex flex-col gap-3 max-w-md">
               {[
-                { label: 'Successful',  count: stats.successCount,   color: 'bg-green-500' },
-                { label: 'Failed',      count: stats.failedCount,    color: 'bg-red-500' },
-                { label: 'Delivered',   count: stats.deliveredCount, color: 'bg-purple-500' },
+                { label: 'Successful', count: stats.successCount,   color: 'bg-green-500' },
+                { label: 'Failed',     count: stats.failedCount,    color: 'bg-red-500'   },
+                { label: 'Delivered',  count: stats.deliveredCount, color: 'bg-purple-500' },
               ].map((row) => {
                 const pct = stats.ordersCount > 0
                   ? Math.round((row.count / stats.ordersCount) * 100)

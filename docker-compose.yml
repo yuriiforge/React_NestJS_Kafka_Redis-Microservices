@@ -256,6 +256,8 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   search-service:
     build:

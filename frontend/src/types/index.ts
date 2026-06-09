@@ -28,12 +28,18 @@ export interface Order {
 
 export interface AnalyticsStats {
   windowSeconds: number;
+  // live window stats
   ordersCount: number;
   successCount: number;
   failedCount: number;
   deliveredCount: number;
-  totalRevenue: number;
+  windowRevenue: number;
   successRate: number;
+  avgPaymentTimeSeconds: number;
+  // all-time DB stats
+  allTimeOrders: number;
+  allTimeRevenue: number;
+  avgOrderValue: number;
 }
 
 export interface ProductsResponse {

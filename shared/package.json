@@ -13,6 +13,7 @@
     "seed": "ts-node -r dotenv/config --transpile-only prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "jsonwebtoken": "^9.0.3",
     "kafkajs": "^2.2.4"
   },

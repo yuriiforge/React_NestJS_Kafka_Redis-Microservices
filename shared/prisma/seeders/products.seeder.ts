@@ -1,13 +1,65 @@
 import { PrismaClient } from '../../src/generated/prisma';
 
-const products = [
-  { name: 'Wireless Headphones', description: 'Over-ear noise-cancelling headphones', price: 89.99,  stock: 42, category: 'Electronics' },
-  { name: 'Running Shoes',        description: 'Lightweight trail running shoes',       price: 129.99, stock: 18, category: 'Sports'      },
-  { name: 'Coffee Maker',         description: '12-cup programmable coffee maker',      price: 59.99,  stock: 7,  category: 'Home'        },
-  { name: 'Backpack',             description: '30L waterproof hiking backpack',        price: 49.99,  stock: 25, category: 'Accessories' },
-  { name: 'Desk Lamp',            description: 'LED desk lamp with USB charging port',  price: 34.99,  stock: 31, category: 'Home'        },
-  { name: 'Yoga Mat',             description: 'Non-slip 6mm thick yoga mat',           price: 24.99,  stock: 60, category: 'Sports'      },
+const categories = [
+  'Electronics',
+  'Sports',
+  'Home',
+  'Accessories',
+  'Books',
+  'Office',
 ];
+
+const adjectives = [
+  'Premium',
+  'Smart',
+  'Portable',
+  'Advanced',
+  'Compact',
+  'Wireless',
+  'Eco',
+  'Professional',
+  'Deluxe',
+  'Modern',
+];
+
+const productTypes = [
+  'Headphones',
+  'Speaker',
+  'Backpack',
+  'Coffee Maker',
+  'Desk Lamp',
+  'Keyboard',
+  'Mouse',
+  'Yoga Mat',
+  'Water Bottle',
+  'Monitor',
+  'Chair',
+  'Notebook',
+];
+
+function randomItem<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomPrice(min: number, max: number): number {
+  return Number((Math.random() * (max - min) + min).toFixed(2));
+}
+
+function generateProducts(count: number) {
+  return Array.from({ length: count }, (_, i) => {
+    const adjective = randomItem(adjectives);
+    const type = randomItem(productTypes);
+
+    return {
+      name: `${adjective} ${type} ${i + 1}`,
+      description: `${adjective.toLowerCase()} ${type.toLowerCase()} for everyday use`,
+      price: randomPrice(10, 500),
+      stock: Math.floor(Math.random() * 100) + 1,
+      category: randomItem(categories),
+      isActive: true,
+    };
+  });
+}
 
 export async function seedProducts(prisma: PrismaClient) {
   const existing = await prisma.product.count();
@@ -17,8 +69,10 @@ export async function seedProducts(prisma: PrismaClient) {
     return;
   }
 
+  const products = generateProducts(200);
+
   const { count } = await prisma.product.createMany({
-    data: products.map((p) => ({ ...p, isActive: true })),
+    data: products,
   });
 
   console.log('  products: %d created', count);

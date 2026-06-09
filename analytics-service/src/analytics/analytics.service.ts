@@ -22,6 +22,7 @@ interface PaymentRecord {
   amount: number;
   status: PaymentResult;
   processedAt: number;
+  paymentTimeMs: number;
 }
 
 interface DeliveryRecord {
@@ -73,19 +74,22 @@ export class AnalyticsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async handlePayment(event: PaymentProcessedEvent) {
-    let amount = 0;
-    if (event.status === PaymentResult.SUCCESS) {
-      const order = await prisma.order.findUnique({
-        where: { id: event.orderId },
-      });
-      amount = order?.totalPrice ?? 0;
-    }
+    const order = await prisma.order.findUnique({
+      where: { id: event.orderId },
+      select: { totalPrice: true, createdAt: true },
+    });
+
+    const amount = event.status === PaymentResult.SUCCESS ? (order?.totalPrice ?? 0) : 0;
+    const paymentTimeMs = order?.createdAt
+      ? Date.now() - new Date(order.createdAt).getTime()
+      : 0;
 
     this.payments.push({
       orderId: event.orderId,
       amount,
       status: event.status,
       processedAt: Date.now(),
+      paymentTimeMs,
     });
 
     await this.es.indexEvent('payment', {
@@ -114,38 +118,54 @@ export class AnalyticsService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Delivery tracked: ${event.orderId} → ${event.status}`);
   }
 
-  getStats(windowSeconds = 60) {
+  async getStats(windowSeconds = 60) {
     const since = Date.now() - windowSeconds * 1000;
 
     const recentPayments = this.payments.filter((p) => p.processedAt >= since);
     const recentDeliveries = this.deliveries.filter((d) => d.updatedAt >= since);
 
-    const successful = recentPayments.filter(
-      (p) => p.status === PaymentResult.SUCCESS,
-    );
-    const failed = recentPayments.filter(
-      (p) => p.status === PaymentResult.FAILED,
-    );
-    const delivered = recentDeliveries.filter(
-      (d) => d.status === OrderDeliveryStatus.DELIVERED,
-    );
+    const successful = recentPayments.filter((p) => p.status === PaymentResult.SUCCESS);
+    const failed = recentPayments.filter((p) => p.status === PaymentResult.FAILED);
+    const delivered = recentDeliveries.filter((d) => d.status === OrderDeliveryStatus.DELIVERED);
 
-    const totalRevenue = successful.reduce((sum, p) => sum + p.amount, 0);
-    const successRate =
-      recentPayments.length > 0
-        ? successful.length / recentPayments.length
-        : 0;
+    const windowRevenue = successful.reduce((sum, p) => sum + p.amount, 0);
+    const successRate = recentPayments.length > 0
+      ? successful.length / recentPayments.length
+      : 0;
+
+    const avgPaymentTimeMs = recentPayments.length > 0
+      ? recentPayments.reduce((sum, p) => sum + p.paymentTimeMs, 0) / recentPayments.length
+      : 0;
 
     this.prune(since);
 
+    // All-time stats from DB
+    const [totalOrders, revenueAgg] = await Promise.all([
+      prisma.order.count(),
+      prisma.order.aggregate({
+        where: { status: { in: ['DELIVERED', 'CONFIRMED', 'SHIPPED'] } },
+        _sum: { totalPrice: true },
+      }),
+    ]);
+
+    const allTimeRevenue = revenueAgg._sum.totalPrice ?? 0;
+
     return {
       windowSeconds,
+      // window (live) stats
       ordersCount: recentPayments.length,
       successCount: successful.length,
       failedCount: failed.length,
       deliveredCount: delivered.length,
-      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      windowRevenue: Math.round(windowRevenue * 100) / 100,
       successRate: Math.round(successRate * 100) / 100,
+      avgPaymentTimeSeconds: Math.round(avgPaymentTimeMs / 1000),
+      // all-time DB stats
+      allTimeOrders: totalOrders,
+      allTimeRevenue: Math.round(allTimeRevenue * 100) / 100,
+      avgOrderValue: totalOrders > 0
+        ? Math.round((allTimeRevenue / totalOrders) * 100) / 100
+        : 0,
     };
   }
 
