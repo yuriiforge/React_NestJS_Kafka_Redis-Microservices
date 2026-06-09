@@ -6,6 +6,7 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  stock: number;
 }
 
 interface UserCartStore {
@@ -43,7 +44,7 @@ export const useUserCartStore = create<UserCartStore>()(
       increment: (id) =>
         set((s) => ({
           items: s.items.map((i) =>
-            i.id === id ? { ...i, quantity: i.quantity + 1 } : i,
+            i.id === id ? { ...i, quantity: Math.min(i.quantity + 1, i.stock) } : i,
           ),
         })),
 

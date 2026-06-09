@@ -18,15 +18,22 @@ import {
   OrderCreatedEvent,
   OrderStatusUpdatedEvent,
   OrderDeliveryStatus,
+  PaymentProcessedEvent,
+  PaymentResult,
   createProducer,
   createConsumer,
 } from '@ecommerce/shared';
+import { Counter, register } from 'prom-client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 
+const ordersCreatedTotal: Counter<string> =
+  (register.getSingleMetric('orders_created_total') as Counter<string>) ??
+  new Counter({ name: 'orders_created_total', help: 'Total orders created' });
+
 const STATUS_MAP: Record<OrderDeliveryStatus, OrderStatus> = {
   [OrderDeliveryStatus.PREPARING]: OrderStatus.CONFIRMED,
-  [OrderDeliveryStatus.SHIPPED]: OrderStatus.SHIPPED,
+  [OrderDeliveryStatus.SHIPPED]:   OrderStatus.SHIPPED,
   [OrderDeliveryStatus.DELIVERED]: OrderStatus.DELIVERED,
 };
 
@@ -34,30 +41,38 @@ const STATUS_MAP: Record<OrderDeliveryStatus, OrderStatus> = {
 export class OrderService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OrderService.name);
   private producer!: Producer;
-  private consumer!: Consumer;
-  private readonly subjects = new Map<
-    string,
-    Subject<OrderStatusUpdatedEvent>
-  >();
+  private statusConsumer!: Consumer;
+  private paymentConsumer!: Consumer;
+  private readonly subjects = new Map<string, Subject<OrderStatusUpdatedEvent>>();
 
   async onModuleInit() {
     this.producer = await createProducer();
-    this.consumer = await createConsumer(
+
+    this.statusConsumer = await createConsumer(
       KafkaGroup.ORDER_SERVICE_STATUS,
       [KafkaTopic.ORDER_STATUS_UPDATED],
       async ({ message }) => {
-        const event: OrderStatusUpdatedEvent = JSON.parse(
-          message.value!.toString(),
-        );
+        const event: OrderStatusUpdatedEvent = JSON.parse(message.value!.toString());
         await this.handleStatusUpdate(event);
       },
     );
+
+    this.paymentConsumer = await createConsumer(
+      KafkaGroup.ORDER_SERVICE_PAYMENTS,
+      [KafkaTopic.PAYMENTS],
+      async ({ message }) => {
+        const event: PaymentProcessedEvent = JSON.parse(message.value!.toString());
+        await this.handlePaymentResult(event);
+      },
+    );
+
     this.logger.log('Kafka ready');
   }
 
   async onModuleDestroy() {
     await this.producer?.disconnect();
-    await this.consumer?.disconnect();
+    await this.statusConsumer?.disconnect();
+    await this.paymentConsumer?.disconnect();
   }
 
   private async handleStatusUpdate(event: OrderStatusUpdatedEvent) {
@@ -65,7 +80,10 @@ export class OrderService implements OnModuleInit, OnModuleDestroy {
 
     await prisma.order.update({
       where: { id: event.orderId },
-      data: { status: newStatus },
+      data: {
+        status: newStatus,
+        ...(event.courier ? { courier: event.courier } : {}),
+      },
     });
 
     const sub = this.subjects.get(event.orderId);
@@ -74,6 +92,16 @@ export class OrderService implements OnModuleInit, OnModuleDestroy {
     if (event.status === OrderDeliveryStatus.DELIVERED) {
       sub?.complete();
       this.subjects.delete(event.orderId);
+    }
+  }
+
+  private async handlePaymentResult(event: PaymentProcessedEvent) {
+    if (event.status === PaymentResult.FAILED) {
+      await prisma.order.update({
+        where: { id: event.orderId },
+        data:  { status: OrderStatus.FAILED },
+      });
+      this.logger.log(`Order ${event.orderId} marked FAILED (payment declined)`);
     }
   }
 
@@ -93,10 +121,10 @@ export class OrderService implements OnModuleInit, OnModuleDestroy {
     const [items, total] = await Promise.all([
       prisma.order.findMany({
         where,
-        include: { items: true },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
+        include:  { items: true },
+        skip:     (page - 1) * limit,
+        take:     limit,
+        orderBy:  { createdAt: 'desc' },
       }),
       prisma.order.count({ where }),
     ]);
@@ -105,7 +133,7 @@ export class OrderService implements OnModuleInit, OnModuleDestroy {
 
   async findOne(id: string, userId: string, role: string) {
     const order = await prisma.order.findUnique({
-      where: { id },
+      where:   { id },
       include: { items: true },
     });
     if (!order) throw new NotFoundException('Order not found');
@@ -120,28 +148,29 @@ export class OrderService implements OnModuleInit, OnModuleDestroy {
       0,
     );
     const order = await prisma.order.create({
-      data: { userId, totalPrice, items: { create: dto.items } },
+      data:    { userId, totalPrice, items: { create: dto.items } },
       include: { items: true },
     });
 
     const event: OrderCreatedEvent = {
-      orderId: order.id,
-      userId: order.userId,
+      orderId:     order.id,
+      userId:      order.userId,
       totalAmount: order.totalPrice,
-      items: order.items.map((i) => ({
+      items:       order.items.map((i) => ({
         productId: i.productId,
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity,
+        name:      i.name,
+        price:     i.price,
+        quantity:  i.quantity,
       })),
       createdAt: order.createdAt.toISOString(),
     };
 
     await this.producer.send({
-      topic: KafkaTopic.ORDERS,
+      topic:    KafkaTopic.ORDERS,
       messages: [{ key: order.id, value: JSON.stringify(event) }],
     });
 
+    ordersCreatedTotal.inc();
     return order;
   }
 
@@ -151,8 +180,8 @@ export class OrderService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('Only pending orders can be cancelled');
     }
     return await prisma.order.update({
-      where: { id },
-      data: { status: OrderStatus.CANCELLED },
+      where:   { id },
+      data:    { status: OrderStatus.CANCELLED },
       include: { items: true },
     });
   }

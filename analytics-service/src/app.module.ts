@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { envValidationSchema } from './config/env.validation';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { MetricsModule } from '@ecommerce/shared';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
       validationOptions: { abortEarly: true },
     }),
     AnalyticsModule,
+    MetricsModule,
   ],
 })
 export class AppModule {}

@@ -39,6 +39,7 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  FAILED
 }
 
 model Order {
@@ -49,6 +50,7 @@ model Order {
   userId     String
   status     OrderStatus @default(PENDING)
   totalPrice Float
+  courier    String?
 
   items      OrderItem[]
 }

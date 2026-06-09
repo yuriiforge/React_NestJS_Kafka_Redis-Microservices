@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -12,24 +12,37 @@ import { SearchService } from './search.service';
 @ApiTags('search')
 @ApiBearerAuth()
 @Controller('search')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, AdminGuard)
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
-  @Get()
-  @ApiOperation({ summary: 'Full-text product search' })
-  @ApiQuery({ name: 'q', description: 'Search query' })
-  @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
-  @ApiResponse({ status: 200, description: 'Matching products' })
-  search(@Query('q') q: string, @Query('category') category?: string) {
-    return this.searchService.search(q, category);
+  @Get('stats')
+  @ApiOperation({ summary: 'Aggregated order stats from Elasticsearch' })
+  @ApiResponse({ status: 200, description: 'ES aggregations' })
+  getStats() {
+    return this.searchService.getStats();
   }
 
-  @Post('reindex')
-  @UseGuards(AdminGuard)
-  @ApiOperation({ summary: 'Reindex all products from DB into Elasticsearch' })
-  @ApiResponse({ status: 201, description: 'Reindex result' })
-  reindexAll() {
-    return this.searchService.reindexAll();
+  @Get('orders/:id')
+  @ApiOperation({ summary: 'Get single order document from Elasticsearch' })
+  @ApiResponse({ status: 200, description: 'Order ES document' })
+  findOrder(@Param('id') id: string) {
+    return this.searchService.findOrder(id);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Full-text order search via Elasticsearch' })
+  @ApiQuery({ name: 'q',      required: false, description: 'Search query (orderId, userId, items, courier)' })
+  @ApiQuery({ name: 'status', required: false, description: 'Filter by order status' })
+  @ApiQuery({ name: 'page',   required: false, description: 'Page number (default 1)' })
+  @ApiQuery({ name: 'limit',  required: false, description: 'Page size (default 10)' })
+  @ApiResponse({ status: 200, description: 'Paginated matching orders' })
+  search(
+    @Query('q')      q?: string,
+    @Query('status') status?: string,
+    @Query('page')   page = '1',
+    @Query('limit')  limit = '10',
+  ) {
+    return this.searchService.search(q, status, +page, +limit);
   }
 }

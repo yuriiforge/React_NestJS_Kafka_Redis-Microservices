@@ -41,14 +41,15 @@ export function ProductCard({ product: p }: Props) {
             <span className="text-sm font-medium w-4 text-center">{inCart.quantity}</span>
             <button
               onClick={() => increment(p.id)}
-              className="w-7 h-7 rounded-full border flex items-center justify-center hover:bg-gray-100 text-sm font-bold"
+              disabled={inCart.quantity >= p.stock}
+              className="w-7 h-7 rounded-full border flex items-center justify-center hover:bg-gray-100 text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
             >
               +
             </button>
           </div>
         ) : (
           <button
-            onClick={() => addProduct({ id: p.id, name: p.name, price: p.price })}
+            onClick={() => addProduct({ id: p.id, name: p.name, price: p.price, stock: p.stock })}
             disabled={p.stock === 0}
             className="bg-black text-white text-sm px-4 py-1.5 rounded-lg hover:bg-gray-800 disabled:opacity-40"
           >

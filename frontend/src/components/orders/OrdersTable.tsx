@@ -1,7 +1,7 @@
 import { OrderStatusBadge } from './OrderStatusBadge';
 import type { Order } from '@/types';
 
-const HEADERS = ['Order ID', 'Date', 'Items', 'Total', 'Status'];
+const HEADERS = ['Order ID', 'Date', 'Items', 'Total', 'Courier', 'Status'];
 
 interface Props {
   orders: Order[];
@@ -43,6 +43,9 @@ export function OrdersTable({ orders }: Props) {
               </td>
               <td className="px-4 py-3 text-gray-500">{o.items.length}</td>
               <td className="px-4 py-3 font-medium">${o.totalPrice.toFixed(2)}</td>
+              <td className="px-4 py-3 text-gray-500 text-sm">
+                {o.courier ?? <span className="text-gray-300">—</span>}
+              </td>
               <td className="px-4 py-3">
                 <OrderStatusBadge status={o.status} />
               </td>

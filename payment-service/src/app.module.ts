@@ -4,7 +4,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { envValidationSchema } from './config/env.validation';
 import { PaymentModule } from './payment/payment.module';
-import { throttlerConfig } from '@ecommerce/shared';
+import { throttlerConfig, MetricsModule } from '@ecommerce/shared';
 
 @Module({
   imports: [
@@ -15,6 +15,7 @@ import { throttlerConfig } from '@ecommerce/shared';
     }),
     ThrottlerModule.forRoot([...throttlerConfig]),
     PaymentModule,
+    MetricsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

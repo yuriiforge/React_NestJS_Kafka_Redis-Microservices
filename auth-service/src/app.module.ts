@@ -5,7 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { envValidationSchema } from './config/env.validation';
 import { RedisModule } from './redis/redis.module';
 import { AuthModule } from './auth/auth.module';
-import { throttlerConfig } from '@ecommerce/shared';
+import { throttlerConfig, MetricsModule } from '@ecommerce/shared';
 
 @Module({
   imports: [
@@ -17,6 +17,7 @@ import { throttlerConfig } from '@ecommerce/shared';
     ThrottlerModule.forRoot([...throttlerConfig]),
     RedisModule,
     AuthModule,
+    MetricsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

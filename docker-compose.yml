@@ -147,8 +147,11 @@ services:
       - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
 
   # ── Migration runner ──────────────────────────────────────────
 
@@ -270,10 +273,13 @@ services:
       PORT: 3005
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce?schema=public
       ELASTICSEARCH_URL: http://elasticsearch:9200
+      KAFKA_BROKER: kafka:9092
     depends_on:
       elasticsearch:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   api-gateway:

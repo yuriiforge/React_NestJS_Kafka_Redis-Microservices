@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { searchApi } from '@/api/search.api';
+import { productsApi } from '@/api/products.api';
 import { useUserCartStore } from '@/store/user-cart.store';
 import type { Product } from '@/types';
 
@@ -36,9 +36,9 @@ export default function ProductSearchPage() {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setLoading(true);
-      searchApi
-        .products(query, category !== 'All' ? category : undefined)
-        .then((res) => { setResults(res.data); setSearched(true); })
+      productsApi
+        .list({ search: query, category: category !== 'All' ? category : undefined, limit: 50 })
+        .then((res) => { setResults(res.data.items); setSearched(true); })
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
     }, 400);
@@ -46,7 +46,7 @@ export default function ProductSearchPage() {
   }, [query, category]);
 
   function handleAdd(p: Product) {
-    addProduct({ id: p.id, name: p.name, price: p.price });
+    addProduct({ id: p.id, name: p.name, price: p.price, stock: p.stock });
     toast.success(`${p.name} added to cart`);
   }
 

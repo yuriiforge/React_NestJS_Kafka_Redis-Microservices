@@ -23,7 +23,28 @@ export interface Order {
   items: OrderItem[];
   totalPrice: number;
   status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'FAILED';
+  courier?: string | null;
   createdAt: string;
+}
+
+export interface OrderSearchDoc {
+  orderId: string;
+  userId: string;
+  status: string;
+  totalAmount: number;
+  itemCount: number;
+  itemNames: string;
+  courier: string | null;
+  paymentStatus: string | null;
+  processedAt: string | null;
+  createdAt: string;
+}
+
+export interface OrderSearchResponse {
+  items: OrderSearchDoc[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 export interface AnalyticsStats {

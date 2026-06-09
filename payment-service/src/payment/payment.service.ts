@@ -19,6 +19,15 @@ import {
   withRetry,
   publishToDLQ,
 } from '@ecommerce/shared';
+import { Counter, register } from 'prom-client';
+
+const paymentsTotal: Counter<string> =
+  (register.getSingleMetric('payments_processed_total') as Counter<string>) ??
+  new Counter({
+    name: 'payments_processed_total',
+    help: 'Payments processed by result',
+    labelNames: ['result'],
+  });
 
 const SUCCESS_RATE = 0.8;
 
@@ -96,16 +105,12 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
         messages: [{ key: event.orderId, value: JSON.stringify(successEvent) }],
       });
 
+      paymentsTotal.inc({ result: 'success' });
       this.logger.log(`Payment succeeded for order ${event.orderId}`);
     } catch (err) {
       await prisma.payment.update({
         where: { id: payment.id },
         data: { status: PaymentStatus.FAILED },
-      });
-
-      await prisma.order.update({
-        where: { id: event.orderId },
-        data: { status: OrderStatus.CANCELLED },
       });
 
       const failedEvent: PaymentProcessedEvent = {
@@ -123,6 +128,7 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
 
       await publishToDLQ(this.producer, event, err, attempts);
 
+      paymentsTotal.inc({ result: 'failed' });
       this.logger.warn(
         `Payment failed for order ${event.orderId} after ${attempts} attempt(s)`,
       );

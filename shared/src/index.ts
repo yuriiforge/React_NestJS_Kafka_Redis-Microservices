@@ -32,3 +32,7 @@ export { createProducer, createConsumer, withRetry, publishToDLQ } from './kafka
 
 // Throttler
 export { throttlerConfig } from './throttler.config';
+
+// Prometheus metrics
+export { MetricsModule } from './metrics/metrics.module';
+export { HttpMetricsInterceptor } from './metrics/http-metrics.interceptor';

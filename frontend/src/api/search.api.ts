@@ -1,7 +1,20 @@
 import api from './axios';
-import type { Product } from '@/types';
+import type { OrderSearchResponse, OrderSearchDoc } from '@/types';
+
+export interface OrderSearchParams {
+  q?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
 
 export const searchApi = {
-  products: (q: string, category?: string) =>
-    api.get<Product[]>('/search', { params: { q, ...(category ? { category } : {}) } }),
+  orders: (params: OrderSearchParams) =>
+    api.get<OrderSearchResponse>('/search', { params }),
+
+  getOrder: (id: string) =>
+    api.get<OrderSearchDoc>(`/search/orders/${id}`),
+
+  stats: () =>
+    api.get('/search/stats'),
 };
