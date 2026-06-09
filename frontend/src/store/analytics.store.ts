@@ -26,7 +26,7 @@ export const useAnalyticsStore = create<AnalyticsStore>((set) => ({
           stats: data,
           history: [
             ...s.history.slice(-19),
-            { time: new Date().toLocaleTimeString(), orders: data.ordersCount, revenue: data.totalRevenue },
+            { time: new Date().toLocaleTimeString(), orders: data.ordersCount, revenue: data.windowRevenue },
           ],
         }));
       } catch {}

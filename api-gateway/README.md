@@ -1,98 +1,64 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# API Gateway
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+HTTP reverse proxy and JWT authentication middleware. Single entry point for all frontend API requests.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**Port:** `8000`
 
-## Description
+## Route Mapping
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Path prefix | Proxied to | Auth required |
+|---|---|---|
+| `/api/auth` | auth-service:3006 | No |
+| `/api/products` | product-service:3007 | Yes (Bearer) |
+| `/api/orders` | order-service:3001 | Yes (Bearer) |
+| `/api/payments` | payment-service:3002 | Yes (Bearer) |
+| `/api/deliveries` | delivery-service:3003 | Yes (Bearer) |
+| `/api/analytics` | analytics-service:3004 | Yes (Bearer) |
+| `/api/search` | search-service:3005 | Yes (Bearer) |
+| `/metrics` | — | No |
 
-## Project setup
+## Swagger Aggregator
 
-```bash
-$ npm install
+The gateway exposes a unified Swagger UI at `/docs` that pulls specs from all downstream services:
+
+| Path | Source |
+|---|---|
+| `/docs/auth-spec` | auth-service:3006/docs-json |
+| `/docs/products-spec` | product-service:3007/docs-json |
+| `/docs/orders-spec` | order-service:3001/docs-json |
+| `/docs/payments-spec` | payment-service:3002/docs-json |
+| `/docs/deliveries-spec` | delivery-service:3003/docs-json |
+| `/docs/analytics-spec` | analytics-service:3004/docs-json |
+| `/docs/search-spec` | search-service:3005/docs-json |
+
+## Authentication Flow
+
+1. Request arrives with `Authorization: Bearer <token>`
+2. `JwtMiddleware` validates the token against `JWT_SECRET`
+3. If valid, `x-user-id` and `x-user-role` headers are injected and the request is forwarded
+4. If invalid/missing, `401 Unauthorized` is returned before reaching any downstream service
+5. `/api/auth/*` is excluded from JWT validation (public routes)
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `PORT` | HTTP port (default `8000`) |
+| `JWT_SECRET` | Must match the secret used by auth-service |
+| `CLIENT_URL` | CORS allowed origin |
+
+## Key Files
+
+```
+src/
+├── app.controller.ts    # Proxy handlers for all routes
+├── app.module.ts        # Module with HttpModule and route config
+└── jwt.middleware.ts    # JWT validation middleware
 ```
 
-## Compile and run the project
+## Commands
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run start:dev    # dev server with watch
+npm run build        # compile to dist/
 ```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

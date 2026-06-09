@@ -24,7 +24,7 @@ export default function ProductSearchPage() {
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { addProduct, items } = useUserCartStore();
 
   useEffect(() => {

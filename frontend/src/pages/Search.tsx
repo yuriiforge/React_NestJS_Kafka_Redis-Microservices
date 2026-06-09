@@ -40,7 +40,7 @@ export default function SearchPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading]       = useState(false);
   const [searched, setSearched]     = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
