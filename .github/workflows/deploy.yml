@@ -12,7 +12,7 @@ jobs:
   deploy:
     name: Build & Deploy
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       # ── 1. Code ────────────────────────────────────────────────
@@ -39,9 +39,23 @@ jobs:
           sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${{ secrets.JWT_SECRET }}|" auth-service/.env
           sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${{ secrets.JWT_SECRET }}|" api-gateway/.env
 
-      # ── 4. Build & start ──────────────────────────────────────
-      - name: Build images and restart containers
-        run: docker compose up --build -d
+      # ── 4. Build images one by one to avoid RAM/network exhaustion ──
+      - name: Build images sequentially
+        run: |
+          docker compose build --no-cache migration-runner
+          docker compose build --no-cache auth-service
+          docker compose build --no-cache product-service
+          docker compose build --no-cache order-service
+          docker compose build --no-cache payment-service
+          docker compose build --no-cache delivery-service
+          docker compose build --no-cache analytics-service
+          docker compose build --no-cache search-service
+          docker compose build --no-cache api-gateway
+          docker compose build --no-cache frontend
+
+      # ── 5. Start all containers ───────────────────────────────
+      - name: Start containers
+        run: docker compose up -d
 
       # ── 5. Health check ───────────────────────────────────────
       - name: Wait for services to become healthy
