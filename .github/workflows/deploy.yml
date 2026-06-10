@@ -13,6 +13,9 @@ jobs:
     name: Build & Deploy
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 60
+    env:
+      DOCKER_BUILDKIT: "1"
+      COMPOSE_DOCKER_CLI_BUILD: "1"
 
     steps:
       # ── 1. Code ────────────────────────────────────────────────
@@ -41,8 +44,6 @@ jobs:
 
       # ── 4. Build images one by one to avoid RAM/network exhaustion ──
       - name: Build images sequentially
-        env:
-          DOCKER_BUILDKIT: "1"
         run: |
           docker compose build migration-runner
           docker compose build auth-service
@@ -94,4 +95,4 @@ jobs:
 
       # ── 9. Cleanup ────────────────────────────────────────────
       - name: Remove dangling images
-        run: docker image prune -f
+        run: docker image prune -f --filter "until=24h"
