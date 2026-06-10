@@ -96,11 +96,6 @@ services:
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
 
   # ── Observability ─────────────────────────────────────────────
 
@@ -108,8 +103,7 @@ services:
     image: docker.elastic.co/kibana/kibana:8.11.0
     restart: unless-stopped
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      - elasticsearch
     ports:
       - "5601:5601"
     environment:
@@ -245,7 +239,7 @@ services:
       kafka:
         condition: service_started
       elasticsearch:
-        condition: service_healthy
+        condition: service_started
       postgres:
         condition: service_healthy
 
@@ -260,7 +254,7 @@ services:
     command: node dist/main.js
     depends_on:
       elasticsearch:
-        condition: service_healthy
+        condition: service_started
       postgres:
         condition: service_healthy
       kafka:
