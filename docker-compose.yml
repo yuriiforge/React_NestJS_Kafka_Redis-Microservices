@@ -8,22 +8,14 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "ruok,srvr,stat"
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 2181 | grep imok"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 15s
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     restart: unless-stopped
     depends_on:
-      zookeeper:
-        condition: service_healthy
+      - zookeeper
     ports:
       - "9092:9092"
     environment:
@@ -35,18 +27,11 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
     volumes:
       - kafka_data:/var/lib/kafka/data
-    healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 10s
-      timeout: 15s
-      retries: 20
-      start_period: 60s
 
   kafka-init:
     image: confluentinc/cp-kafka:7.5.0
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
     restart: on-failure
     entrypoint: ["/bin/sh", "-c"]
     command: >
@@ -60,8 +45,7 @@ services:
     image: provectuslabs/kafka-ui:v0.7.2
     restart: unless-stopped
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
     ports:
       - "8080:8080"
     environment:
@@ -216,7 +200,7 @@ services:
       migration-runner:
         condition: service_completed_successfully
       kafka:
-        condition: service_healthy
+        condition: service_started
 
   payment-service:
     build:
@@ -231,7 +215,7 @@ services:
       migration-runner:
         condition: service_completed_successfully
       kafka:
-        condition: service_healthy
+        condition: service_started
 
   delivery-service:
     build:
@@ -246,7 +230,7 @@ services:
       migration-runner:
         condition: service_completed_successfully
       kafka:
-        condition: service_healthy
+        condition: service_started
 
   analytics-service:
     build:
@@ -259,7 +243,7 @@ services:
     command: node dist/main.js
     depends_on:
       kafka:
-        condition: service_healthy
+        condition: service_started
       elasticsearch:
         condition: service_healthy
       postgres:
@@ -280,7 +264,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_healthy
+        condition: service_started
 
   api-gateway:
     build:
