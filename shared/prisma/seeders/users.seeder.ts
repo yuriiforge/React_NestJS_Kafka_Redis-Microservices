@@ -8,8 +8,8 @@ export async function seedUsers(prisma: PrismaClient) {
   ]);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@shopflow.com' },
-    update: {},
+    where: { username: 'admin' },
+    update: { email: 'admin@shopflow.com', password: adminPw, role: Role.ADMIN },
     create: {
       email: 'admin@shopflow.com',
       username: 'admin',
@@ -21,8 +21,8 @@ export async function seedUsers(prisma: PrismaClient) {
   });
 
   const user = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
-    update: {},
+    where: { username: 'john_doe' },
+    update: { email: 'user@example.com', password: userPw, role: Role.USER },
     create: {
       email: 'user@example.com',
       username: 'john_doe',

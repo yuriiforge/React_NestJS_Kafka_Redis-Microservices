@@ -27,11 +27,18 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
     volumes:
       - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 15s
+      retries: 20
+      start_period: 60s
 
   kafka-init:
     image: confluentinc/cp-kafka:7.5.0
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     restart: on-failure
     entrypoint: ["/bin/sh", "-c"]
     command: >
@@ -194,7 +201,7 @@ services:
       migration-runner:
         condition: service_completed_successfully
       kafka:
-        condition: service_started
+        condition: service_healthy
 
   payment-service:
     build:
@@ -209,7 +216,7 @@ services:
       migration-runner:
         condition: service_completed_successfully
       kafka:
-        condition: service_started
+        condition: service_healthy
 
   delivery-service:
     build:
@@ -224,7 +231,7 @@ services:
       migration-runner:
         condition: service_completed_successfully
       kafka:
-        condition: service_started
+        condition: service_healthy
 
   analytics-service:
     build:
@@ -237,7 +244,7 @@ services:
     command: node dist/main.js
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
       elasticsearch:
         condition: service_started
       postgres:
@@ -258,7 +265,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
 
   api-gateway:
     build:
