@@ -41,17 +41,19 @@ jobs:
 
       # ── 4. Build images one by one to avoid RAM/network exhaustion ──
       - name: Build images sequentially
+        env:
+          DOCKER_BUILDKIT: "1"
         run: |
-          docker compose build --no-cache migration-runner
-          docker compose build --no-cache auth-service
-          docker compose build --no-cache product-service
-          docker compose build --no-cache order-service
-          docker compose build --no-cache payment-service
-          docker compose build --no-cache delivery-service
-          docker compose build --no-cache analytics-service
-          docker compose build --no-cache search-service
-          docker compose build --no-cache api-gateway
-          docker compose build --no-cache frontend
+          docker compose build migration-runner
+          docker compose build auth-service
+          docker compose build product-service
+          docker compose build order-service
+          docker compose build payment-service
+          docker compose build delivery-service
+          docker compose build analytics-service
+          docker compose build search-service
+          docker compose build api-gateway
+          docker compose build frontend
 
       # ── 5. Stop old containers (removes orphaned services) ───────
       - name: Stop containers

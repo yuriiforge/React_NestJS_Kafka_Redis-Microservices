@@ -11,7 +11,7 @@ services:
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
     healthcheck:
-      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/2181"]
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -34,9 +34,9 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/9092"]
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 2>/dev/null && echo ready || exit 1"]
       interval: 10s
-      timeout: 10s
+      timeout: 15s
       retries: 20
       start_period: 60s
 
