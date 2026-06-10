@@ -8,13 +8,11 @@ COPY analytics-service/package*.json ./analytics-service/
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
+# Build shared first so this layer is cached independently of service source changes
 COPY shared/ ./shared/
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma &&     npm run build -w @ecommerce/shared &&     cp -r ./shared/src/generated ./shared/dist/generated
+
 COPY analytics-service/ ./analytics-service/
-
-RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
-    npm run build -w @ecommerce/shared && \
-    cp -r ./shared/src/generated ./shared/dist/generated
-
 WORKDIR /app/analytics-service
 
 
@@ -42,7 +40,8 @@ RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 COPY --from=builder /app/analytics-service/dist ./analytics-service/dist
 COPY --from=builder /app/shared/dist ./shared/dist
 
+
 WORKDIR /app/analytics-service
 
 EXPOSE 3004
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]

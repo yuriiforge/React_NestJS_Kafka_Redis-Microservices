@@ -55,7 +55,7 @@ services:
        kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic order-stats --partitions 1 --replication-factor 1"
 
   kafka-ui:
-    image: provectuslabs/kafka-ui
+    image: provectuslabs/kafka-ui:v0.7.2
     restart: unless-stopped
     depends_on:
       kafka:
@@ -130,7 +130,7 @@ services:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v2.52.0
     restart: unless-stopped
     ports:
       - "9090:9090"
@@ -139,7 +139,7 @@ services:
       - prometheus_data:/prometheus
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:11.0.0
     restart: unless-stopped
     depends_on:
       - prometheus
@@ -254,6 +254,7 @@ services:
     ports:
       - "3004:3004"
     env_file: ./analytics-service/.env
+    command: node dist/main.js
     depends_on:
       kafka:
         condition: service_healthy
@@ -269,11 +270,8 @@ services:
     restart: unless-stopped
     ports:
       - "3005:3005"
-    environment:
-      PORT: 3005
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce?schema=public
-      ELASTICSEARCH_URL: http://elasticsearch:9200
-      KAFKA_BROKER: kafka:9092
+    env_file: ./search-service/.env
+    command: node dist/main.js
     depends_on:
       elasticsearch:
         condition: service_healthy

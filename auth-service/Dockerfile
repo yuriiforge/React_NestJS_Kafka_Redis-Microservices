@@ -8,13 +8,11 @@ COPY auth-service/package*.json ./auth-service/
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
+# Build shared first so this layer is cached independently of service source changes
 COPY shared/ ./shared/
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma &&     npm run build -w @ecommerce/shared &&     cp -r ./shared/src/generated ./shared/dist/generated
+
 COPY auth-service/ ./auth-service/
-
-RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
-    /app/node_modules/.bin/tsc --project /app/shared/tsconfig.json && \
-    cp -r ./shared/src/generated ./shared/dist/generated
-
 WORKDIR /app/auth-service
 
 
@@ -46,4 +44,4 @@ COPY shared/prisma ./shared/prisma
 WORKDIR /app/auth-service
 
 EXPOSE 3006
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]

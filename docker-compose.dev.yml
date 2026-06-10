@@ -72,6 +72,7 @@ services:
       target: dev
     volumes:
       - ./search-service/src:/app/search-service/src
+    command: npm run start:dev
     environment:
       CHOKIDAR_USEPOLLING: "true"
 

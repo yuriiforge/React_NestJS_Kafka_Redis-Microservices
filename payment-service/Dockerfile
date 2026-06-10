@@ -8,13 +8,11 @@ COPY payment-service/package*.json ./payment-service/
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
+# Build shared first so this layer is cached independently of service source changes
 COPY shared/ ./shared/
+RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma &&     npm run build -w @ecommerce/shared &&     cp -r ./shared/src/generated ./shared/dist/generated
+
 COPY payment-service/ ./payment-service/
-
-RUN /app/node_modules/.bin/prisma generate --schema=./shared/prisma/schema.prisma && \
-    npm run build -w @ecommerce/shared && \
-    cp -r ./shared/src/generated ./shared/dist/generated
-
 WORKDIR /app/payment-service
 
 
@@ -46,4 +44,4 @@ COPY shared/prisma ./shared/prisma
 WORKDIR /app/payment-service
 
 EXPOSE 3002
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]
