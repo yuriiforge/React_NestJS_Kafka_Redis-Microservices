@@ -26,6 +26,11 @@ export class CreateProductDto {
   @IsString()
   category: string;
 
+  @ApiPropertyOptional({ example: '🎧', default: '📦' })
+  @IsString()
+  @IsOptional()
+  emoji?: string;
+
   @ApiPropertyOptional({ example: true, default: true })
   @IsBoolean()
   @IsOptional()

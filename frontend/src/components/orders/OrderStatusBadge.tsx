@@ -3,7 +3,7 @@ import type { Order } from '@/types';
 
 const STATUS_LABEL: Record<Order['status'], string> = {
   PENDING:   'Pending',
-  CONFIRMED: 'Processing',
+  CONFIRMED: 'Preparing',
   SHIPPED:   'Shipped',
   DELIVERED: 'Delivered',
   CANCELLED: 'Cancelled',
@@ -11,9 +11,9 @@ const STATUS_LABEL: Record<Order['status'], string> = {
 };
 
 const STATUS_COLORS: Record<Order['status'], string> = {
-  PENDING:   'bg-yellow-100 text-yellow-700',
-  CONFIRMED: 'bg-blue-100 text-blue-700',
-  SHIPPED:   'bg-purple-100 text-purple-700',
+  PENDING:   'bg-gray-100 text-gray-600',
+  CONFIRMED: 'bg-amber-100 text-amber-700',
+  SHIPPED:   'bg-blue-100 text-blue-700',
   DELIVERED: 'bg-green-100 text-green-700',
   CANCELLED: 'bg-gray-100 text-gray-500',
   FAILED:    'bg-red-100 text-red-600',

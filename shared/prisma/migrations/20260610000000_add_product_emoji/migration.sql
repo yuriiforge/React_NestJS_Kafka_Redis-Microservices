@@ -1,0 +1,1 @@
+ALTER TABLE "Product" ADD COLUMN "emoji" TEXT NOT NULL DEFAULT '📦';

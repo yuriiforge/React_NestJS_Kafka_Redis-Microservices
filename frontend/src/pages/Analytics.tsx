@@ -1,7 +1,16 @@
 import { useEffect } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts';
 import { useAnalyticsStore } from '@/store/analytics.store';
 
@@ -13,12 +22,12 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const stop = startPolling(10_000);
     return stop;
-  }, []);
+  }, [startPolling]);
 
   const pieData = stats
     ? [
         { name: 'Success', value: stats.successCount },
-        { name: 'Failed',  value: stats.failedCount },
+        { name: 'Failed', value: stats.failedCount },
       ]
     : [];
 
@@ -64,7 +73,9 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border px-5 py-4">
-              <p className="text-xs text-gray-400 uppercase tracking-wide">{s.label}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide">
+                {s.label}
+              </p>
               <p className="text-2xl font-semibold mt-1">{s.value}</p>
               <p className="text-xs text-gray-400 mt-1">{s.sub}</p>
             </div>
@@ -75,7 +86,9 @@ export default function AnalyticsPage() {
           {/* Line chart – orders / min */}
           <div className="lg:col-span-2 bg-white rounded-xl border p-5">
             <p className="text-sm font-medium mb-1">Orders / min</p>
-            <p className="text-xs text-gray-400 mb-4">60 s rolling window, sampled every 10 s</p>
+            <p className="text-xs text-gray-400 mb-4">
+              60 s rolling window, sampled every 10 s
+            </p>
             {history.length < 2 ? (
               <div className="h-48 flex items-center justify-center text-sm text-gray-400">
                 Collecting data…
@@ -104,7 +117,9 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-xl border p-5">
             <p className="text-sm font-medium mb-1">Payment Success Rate</p>
             <p className="text-xs text-gray-400 mb-4">
-              {stats ? `${(stats.successRate * 100).toFixed(0)}% success` : 'No data yet'}
+              {stats
+                ? `${(stats.successRate * 100).toFixed(0)}% success`
+                : 'No data yet'}
             </p>
             {(stats?.ordersCount ?? 0) === 0 ? (
               <div className="h-48 flex items-center justify-center text-sm text-gray-400">
@@ -138,21 +153,38 @@ export default function AnalyticsPage() {
         {stats && stats.ordersCount > 0 && (
           <div className="bg-white rounded-xl border p-5">
             <p className="text-sm font-medium mb-1">Payment breakdown</p>
-            <p className="text-xs text-gray-400 mb-4">Last {stats.windowSeconds}s window</p>
+            <p className="text-xs text-gray-400 mb-4">
+              Last {stats.windowSeconds}s window
+            </p>
             <div className="flex flex-col gap-3 max-w-md">
               {[
-                { label: 'Successful', count: stats.successCount,   color: 'bg-green-500' },
-                { label: 'Failed',     count: stats.failedCount,    color: 'bg-red-500'   },
-                { label: 'Delivered',  count: stats.deliveredCount, color: 'bg-purple-500' },
+                {
+                  label: 'Successful',
+                  count: stats.successCount,
+                  color: 'bg-green-500',
+                },
+                {
+                  label: 'Failed',
+                  count: stats.failedCount,
+                  color: 'bg-red-500',
+                },
+                {
+                  label: 'Delivered',
+                  count: stats.deliveredCount,
+                  color: 'bg-purple-500',
+                },
               ].map((row) => {
-                const pct = stats.ordersCount > 0
-                  ? Math.round((row.count / stats.ordersCount) * 100)
-                  : 0;
+                const pct =
+                  stats.ordersCount > 0
+                    ? Math.round((row.count / stats.ordersCount) * 100)
+                    : 0;
                 return (
                   <div key={row.label}>
                     <div className="flex justify-between text-xs text-gray-500 mb-1">
                       <span>{row.label}</span>
-                      <span>{row.count} ({pct}%)</span>
+                      <span>
+                        {row.count} ({pct}%)
+                      </span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div

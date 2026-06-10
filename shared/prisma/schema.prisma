@@ -112,5 +112,6 @@ model Product {
   price       Float
   stock       Int     @default(0)
   category    String
+  emoji       String  @default("📦")
   isActive    Boolean @default(true)
 }

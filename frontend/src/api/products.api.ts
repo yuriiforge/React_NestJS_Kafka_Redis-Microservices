@@ -17,6 +17,7 @@ export interface ProductPayload {
   price: number;
   stock: number;
   category: string;
+  emoji: string;
   isActive?: boolean;
 }
 

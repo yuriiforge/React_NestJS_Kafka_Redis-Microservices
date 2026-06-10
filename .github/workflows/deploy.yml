@@ -53,11 +53,19 @@ jobs:
           docker compose build --no-cache api-gateway
           docker compose build --no-cache frontend
 
-      # ── 5. Start all containers ───────────────────────────────
+      # ── 5. Stop old containers (removes orphaned services) ───────
+      - name: Stop containers
+        run: docker compose down --remove-orphans
+
+      # ── 6. Start all containers ───────────────────────────────
       - name: Start containers
         run: docker compose up -d
 
-      # ── 5. Health check ───────────────────────────────────────
+      # ── 7. Seed database ──────────────────────────────────────
+      - name: Seed database
+        run: docker compose run --rm migration-runner sh -c "cd /app/shared && npm run seed"
+
+      # ── 8. Health check ───────────────────────────────────────
       - name: Wait for services to become healthy
         run: |
           echo "Waiting 30 s for containers to initialise..."
@@ -82,6 +90,6 @@ jobs:
           fi
           echo "All containers running."
 
-      # ── 6. Cleanup ────────────────────────────────────────────
+      # ── 9. Cleanup ────────────────────────────────────────────
       - name: Remove dangling images
         run: docker image prune -f

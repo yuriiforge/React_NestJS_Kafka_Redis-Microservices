@@ -72,12 +72,14 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await withRetry(
-        () => {
+        async () => {
           attempts++;
+          // Simulate payment provider latency (1–3 s) per spec
+          const delay = 1000 + Math.random() * 2000;
+          await new Promise((r) => setTimeout(r, delay));
           if (Math.random() >= SUCCESS_RATE) {
             return Promise.reject(new Error('Payment declined by provider'));
           }
-          return Promise.resolve();
         },
         3,
         1000,

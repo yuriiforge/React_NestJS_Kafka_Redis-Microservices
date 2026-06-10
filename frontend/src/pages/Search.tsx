@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { searchApi } from '@/api/search.api';
+import { useOrderSearch } from '@/hooks/useOrderSearch';
 import { Pagination } from '@/components/Pagination';
-import type { OrderSearchDoc } from '@/types';
 
 const ORDER_STATUSES = [
   { value: '', label: 'All statuses' },
   { value: 'PENDING',        label: 'Pending' },
-  { value: 'CONFIRMED',      label: 'Processing' },
+  { value: 'CONFIRMED',      label: 'Preparing' },
   { value: 'SHIPPED',        label: 'Shipped' },
   { value: 'DELIVERED',      label: 'Delivered' },
   { value: 'FAILED',         label: 'Failed' },
@@ -15,9 +13,9 @@ const ORDER_STATUSES = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING:        'bg-yellow-100 text-yellow-700',
-  CONFIRMED:      'bg-blue-100 text-blue-700',
-  SHIPPED:        'bg-purple-100 text-purple-700',
+  PENDING:        'bg-gray-100 text-gray-600',
+  CONFIRMED:      'bg-amber-100 text-amber-700',
+  SHIPPED:        'bg-blue-100 text-blue-700',
   DELIVERED:      'bg-green-100 text-green-700',
   CANCELLED:      'bg-gray-100 text-gray-500',
   FAILED:         'bg-red-100 text-red-600',
@@ -29,70 +27,32 @@ const PAYMENT_COLORS: Record<string, string> = {
   FAILED:  'bg-red-100 text-red-600',
 };
 
-const PAGE_SIZE = 10;
-
 export default function SearchPage() {
-  const [q, setQ]           = useState('');
-  const [status, setStatus] = useState('');
-  const [page, setPage]     = useState(1);
-  const [items, setItems]   = useState<OrderSearchDoc[]>([]);
-  const [total, setTotal]   = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading]       = useState(false);
-  const [searched, setSearched]     = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { params, setQuery, setStatus, setPage, results } = useOrderSearch();
 
-  useEffect(() => {
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setLoading(true);
-      searchApi
-        .orders({ q: q.trim() || undefined, status: status || undefined, page, limit: PAGE_SIZE })
-        .then((res) => {
-          setItems(res.data.items);
-          setTotal(res.data.total);
-          setTotalPages(res.data.totalPages);
-          setSearched(true);
-        })
-        .catch(() => setItems([]))
-        .finally(() => setLoading(false));
-    }, 350);
-    return () => clearTimeout(debounceRef.current);
-  }, [q, status, page]);
-
-  function handleQueryChange(v: string) {
-    setQ(v);
-    setPage(1);
-  }
-
-  function handleStatusChange(v: string) {
-    setStatus(v);
-    setPage(1);
-  }
+  const statusLabel = (s: string) =>
+    ORDER_STATUSES.find((o) => o.value === s)?.label ?? s;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b px-6 py-4">
         <h1 className="text-xl font-semibold">Order Search</h1>
-        <p className="text-sm text-gray-400 mt-0.5">
-          Full-text search across all orders via Elasticsearch
-        </p>
+        <p className="text-sm text-gray-400 mt-0.5">Full-text search across all orders via Elasticsearch</p>
       </div>
 
       <div className="px-6 py-8 flex flex-col gap-6">
-        {/* Search controls */}
         <div className="bg-white rounded-xl border p-5 flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             placeholder="Search by order ID, user ID, item name, courier…"
-            value={q}
-            onChange={(e) => handleQueryChange(e.target.value)}
+            value={params.q}
+            onChange={(e) => setQuery(e.target.value)}
             className="flex-1 border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-black"
             autoFocus
           />
           <select
-            value={status}
-            onChange={(e) => handleStatusChange(e.target.value)}
+            value={params.status}
+            onChange={(e) => setStatus(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-black"
           >
             {ORDER_STATUSES.map((s) => (
@@ -101,83 +61,65 @@ export default function SearchPage() {
           </select>
         </div>
 
-        {/* Results */}
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <div className="px-5 py-3 border-b flex items-center justify-between">
-            <p className="text-sm font-medium">Results</p>
-            {searched && (
-              <p className="text-xs text-gray-400">{total} order{total !== 1 ? 's' : ''} found</p>
-            )}
+        {results.searched && (
+          <p className="text-xs text-gray-400">{results.total} order{results.total !== 1 ? 's' : ''} found</p>
+        )}
+
+        {results.loading ? (
+          <div className="py-20 text-center text-sm text-gray-400">Searching…</div>
+        ) : !results.searched ? (
+          <div className="py-20 text-center text-sm text-gray-400">Showing all orders</div>
+        ) : results.items.length === 0 ? (
+          <div className="py-20 text-center text-sm text-gray-400">
+            No orders found{params.q ? ` for "${params.q}"` : ''}
           </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {results.items.map((o) => (
+              <div key={o.orderId} className="bg-white rounded-xl border p-5 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-mono text-xs text-gray-700 font-medium">{o.orderId.slice(0, 8)}…</span>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {statusLabel(o.status)}
+                  </span>
+                </div>
 
-          {loading ? (
-            <div className="py-12 text-center text-sm text-gray-400">Searching…</div>
-          ) : !searched ? (
-            <div className="py-12 text-center text-sm text-gray-400">Showing all orders</div>
-          ) : items.length === 0 ? (
-            <div className="py-12 text-center text-sm text-gray-400">
-              No orders found{q ? ` for "${q}"` : ''}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    {['Order ID', 'User', 'Status', 'Total', 'Items', 'Courier', 'Payment', 'Date'].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {items.map((o) => (
-                    <tr key={o.orderId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs text-gray-700">
-                        {o.orderId.slice(0, 8)}…
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500">
-                        {o.userId.slice(0, 8)}…
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {ORDER_STATUSES.find((s) => s.value === o.status)?.label ?? o.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-medium whitespace-nowrap">
-                        ${o.totalAmount.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 text-center">
-                        {o.itemCount}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">
-                        {o.courier ?? <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        {o.paymentStatus ? (
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${PAYMENT_COLORS[o.paymentStatus] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {o.paymentStatus}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                        {new Date(o.createdAt).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                <div className="flex flex-col gap-1 text-sm">
+                  <div className="flex justify-between text-gray-500">
+                    <span>User</span>
+                    <span className="font-mono text-xs">{o.userId.slice(0, 8)}…</span>
+                  </div>
+                  <div className="flex justify-between text-gray-500">
+                    <span>Items</span>
+                    <span>{o.itemCount}</span>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <span>Total</span>
+                    <span>${o.totalAmount.toFixed(2)}</span>
+                  </div>
+                  {o.courier && (
+                    <div className="flex justify-between text-gray-500">
+                      <span>Courier</span>
+                      <span>{o.courier}</span>
+                    </div>
+                  )}
+                </div>
 
-        {totalPages > 1 && (
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-xs text-gray-400">{new Date(o.createdAt).toLocaleDateString()}</span>
+                  {o.paymentStatus && (
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${PAYMENT_COLORS[o.paymentStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {o.paymentStatus}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {results.totalPages > 1 && (
+          <Pagination page={params.page} totalPages={results.totalPages} onChange={setPage} />
         )}
       </div>
     </div>

@@ -9,6 +9,15 @@ const categories = [
   'Office',
 ];
 
+const categoryEmoji: Record<string, string> = {
+  Electronics: '🎧',
+  Sports:      '👟',
+  Home:        '🏠',
+  Accessories: '🎒',
+  Books:       '📚',
+  Office:      '🖊️',
+};
+
 const adjectives = [
   'Premium',
   'Smart',
@@ -50,12 +59,14 @@ function generateProducts(count: number) {
     const adjective = randomItem(adjectives);
     const type = randomItem(productTypes);
 
+    const category = randomItem(categories);
     return {
       name: `${adjective} ${type} ${i + 1}`,
       description: `${adjective.toLowerCase()} ${type.toLowerCase()} for everyday use`,
       price: randomPrice(10, 500),
       stock: Math.floor(Math.random() * 100) + 1,
-      category: randomItem(categories),
+      category,
+      emoji: categoryEmoji[category] ?? '📦',
       isActive: true,
     };
   });
